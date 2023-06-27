@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bottom_sheet_background">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvHeaderTittle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:fontFamily="@font/plus_jakarta_sans_semi_bold"
+        android:text="@string/settings"
+        android:textSize="@dimen/text_header"
+        android:textColor="@color/text_title"/>
+    
+    <View
+        android:id="@+id/headerDivider"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/divider"
+        android:layout_marginTop="@dimen/_20sdp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvHeaderTittle"
+        android:background="@drawable/divider"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvHeaderSub"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_20sdp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/headerDivider"
+        android:fontFamily="@font/plus_jakarta_sans_medium"
+        android:text="@string/max_parallel_downloads"
+        android:textSize="@dimen/text_title"
+        android:textColor="@color/text_sub"/>
+
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnClose"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/input_height"
+        android:layout_marginTop="@dimen/_20sdp"
+        android:layout_marginEnd="@dimen/_10sdp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btnUpdate"
+        app:layout_constraintTop_toBottomOf="@+id/tvHeaderSub"
+        android:background="@drawable/button_secondary"
+        android:text="@string/close"
+        android:textAllCaps="false"
+        android:textSize="@dimen/text_title"
+        android:textColor="@color/text_title"
+        android:fontFamily="@font/plus_jakarta_sans_bold"/>
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnUpdate"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/input_height"
+        android:layout_marginTop="@dimen/_20sdp"
+        android:layout_marginStart="@dimen/_10sdp"
+        app:layout_constraintStart_toEndOf="@+id/btnClose"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvHeaderSub"
+        android:background="@drawable/button_primary"
+        android:text="@string/update"
+        android:textAllCaps="false"
+        android:textSize="@dimen/text_title"
+        android:textColor="@color/white"
+        android:fontFamily="@font/plus_jakarta_sans_bold"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

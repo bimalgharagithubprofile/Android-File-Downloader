@@ -2,23 +2,28 @@
 <resources>
 
     <color name="purple">#892EFF</color>
-    <color name="purple_300">#9D7CC8</color>
-    <color name="purple_700">#6F00FF</color>
+    <color name="purple_8">#F8F3FF</color>
 
-    <color name="black">#1A0D0D</color>
+    <color name="text_title">#2B2F39</color>
+    <color name="text_sub">#6B6B6B</color><!--text sub-->
+    <color name="text_hint">#858181</color><!--text hint-->
 
     <color name="white">#FFFFFF</color>
-    <color name="white_8">#F5F5F5</color>
-    <color name="white_10">#FAFAFA</color>
 
-    <color name="grey">#858181</color>
-    <color name="grey_100">#D3D3D3</color>
+    <color name="surface">#F6F6F6</color><!--surface-->
 
-    <color name="blue">#3690FA</color>
-    <color name="orange">#FFBB0E</color>
-    <color name="ogy">#28C6D0</color>
+    <color name="divider">#F1F1F1</color><!--divider-->
 
+    <color name="bg1">#E6E6E6</color><!--bg-->
+    <color name="bg2">#EFEFEF</color><!--bg2-->
+
+    <color name="grey_900">#4F4F4F</color><!--text on bg2-->
+
+    <color name="action_icon">#787878</color><!--action icon-->
+
+    <color name="orange">#FBC441</color>
+    <color name="grey">#A7A7A7</color>
     <color name="green">#72BD6C</color>
-    <color name="red">#DC4A4A</color>
+    <color name="red">#F26262</color>
 
 </resources>
