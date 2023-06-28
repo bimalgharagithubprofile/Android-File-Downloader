@@ -10,6 +10,7 @@ import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.common.dispatcher.DispatcherProviderSource
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.domain.repository.DownloaderRepositorySource
+import com.bimalghara.filedownloader.utils.FunUtil.convertTimestampToLocalDate
 import com.bimalghara.filedownloader.utils.NetworkConnectivitySource
 import com.bimalghara.filedownloader.utils.ResourceWrapper
 import com.bimalghara.filedownloader.utils.SingleEvent
@@ -20,6 +21,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.util.*
 import javax.inject.Inject
 
 /**
@@ -43,18 +47,36 @@ class MainViewModel @Inject constructor(
     private var _fileDetailsJob: Job? = null
 
 
-    init {
-        getUsersDataFromCached()
-    }
-
-    private fun getUsersDataFromCached() = viewModelScope.launch {
+    private fun getUsersDataFromCached(context: Context) = viewModelScope.launch {
         _downloadsLiveData.value = ResourceWrapper.Loading()
-        /*downloaderRepositorySource.getDownloads().onEach { newList ->
+        downloaderRepositorySource.requestDownloadsFromLocal().onEach { newList ->
             if (newList.isNotEmpty()) {
+                val completeList: MutableList<DownloadEntity> = arrayListOf()
+                if (_downloadsLiveData.value?.data != null) {
+                    val existingList = _downloadsLiveData.value!!.data!!.toMutableList()
+                    existingList.removeAll(newList)
+                    completeList.addAll(existingList.plus(newList).toSet().toList())
+                } else {
+                    completeList.addAll(newList.toSet().toList())
+                }
 
-            }
-        }.launchIn(viewModelScope)*/
+                if (completeList.isEmpty()) {
+                    _downloadsLiveData.value = ResourceWrapper.Error(context.getStringFromResource(R.string.no_downloads))
+                } else {
+                    val groupedRecords = completeList.groupBy { record ->
+                        convertTimestampToLocalDate(record.updatedAt)
+                    }
+                    for ((date, records) in groupedRecords) {
+                        Log.e(logTag, "Date: $date")
+                        for (record in records) {
+                            Log.e(logTag,"Record: ${record.name}")
+                        }
+                    }
+                }
+            } else _downloadsLiveData.value = ResourceWrapper.Error(context.getStringFromResource(R.string.no_downloads))
+        }.launchIn(viewModelScope)
     }
+
 
     fun getFileDetails(context: Context) = viewModelScope.launch {
         val networkStatus = async { getNetworkStatus() }.await()

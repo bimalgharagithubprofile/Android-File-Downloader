@@ -7,7 +7,10 @@ import com.bimalghara.filedownloader.data.local.database.DownloadsDao
 import com.bimalghara.filedownloader.data.network.DownloadCallback
 import com.bimalghara.filedownloader.data.network.retrofit.ApiServiceGenerator
 import com.bimalghara.filedownloader.domain.model.FileDetails
+import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.domain.repository.DownloaderRepositorySource
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import okhttp3.ResponseBody
 import java.io.IOException
 import javax.inject.Inject
@@ -23,6 +26,11 @@ class DownloaderRepositoryImpl @Inject constructor(
     private val downloadsDao: DownloadsDao?,
 ) : DownloaderRepositorySource {
     private val logTag = javaClass.simpleName
+
+
+    override suspend fun requestDownloadsFromLocal(): Flow<List<DownloadEntity>> {
+        return downloadsDao?.getDownloads() ?: flow { emit(emptyList()) }
+    }
 
     override suspend fun requestFileDetailsFromNetwork(
         appContext: Context,

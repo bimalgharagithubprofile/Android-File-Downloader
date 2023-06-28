@@ -2,6 +2,8 @@ package com.bimalghara.filedownloader.domain.repository
 
 import android.content.Context
 import com.bimalghara.filedownloader.domain.model.FileDetails
+import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
+import kotlinx.coroutines.flow.Flow
 
 
 /**
@@ -9,6 +11,8 @@ import com.bimalghara.filedownloader.domain.model.FileDetails
  */
 
 interface DownloaderRepositorySource {
+
+    suspend fun requestDownloadsFromLocal(): Flow<List<DownloadEntity>>
 
     suspend fun requestFileDetailsFromNetwork(appContext: Context, url: String): FileDetails
 

@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.Flow
 interface DownloadsDao {
 
     //can't be suspending because it's Flow
-    @Query("SELECT * FROM UserEntity")
+    @Query("SELECT * FROM DownloadEntity")
     fun getDownloads(): Flow<List<DownloadEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
