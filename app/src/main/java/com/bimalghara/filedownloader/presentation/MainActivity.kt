@@ -1,15 +1,11 @@
 package com.bimalghara.filedownloader.presentation
 
-import android.app.Dialog
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
-import androidx.appcompat.widget.AppCompatButton
-import androidx.appcompat.widget.AppCompatEditText
-import androidx.appcompat.widget.AppCompatImageView
+import androidx.activity.viewModels
 import androidx.appcompat.widget.PopupMenu
-import androidx.constraintlayout.widget.Group
 import androidx.lifecycle.lifecycleScope
 import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.databinding.ActivityMainBinding
@@ -32,6 +28,8 @@ class MainActivity : BaseActivity() {
     private val TAG = javaClass.simpleName
 
     private lateinit var binding: ActivityMainBinding
+
+    private val viewModel: MainViewModel by viewModels()
 
     var bottomSheetSettings: BottomSheetBehavior<FrameLayout>?=null
     var bottomSheetAddNew: BottomSheetBehavior<FrameLayout>?=null
@@ -78,6 +76,10 @@ class MainActivity : BaseActivity() {
         }
 
         handleBottomSheetSettings()
+    }
+
+    override fun observeViewModel() {
+        observeError(binding.root, viewModel.errorSingleEvent)
     }
 
     private fun popupMenu() {
