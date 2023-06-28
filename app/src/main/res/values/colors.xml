@@ -17,6 +17,7 @@
     <color name="bg1">#E6E6E6</color><!--bg-->
     <color name="bg2">#EFEFEF</color><!--bg2-->
 
+    <color name="grey_100">#848484</color><!--text-->
     <color name="grey_900">#4F4F4F</color><!--text on bg2-->
 
     <color name="action_icon">#787878</color><!--action icon-->

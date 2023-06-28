@@ -12,12 +12,15 @@ import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.PopupMenu
 import androidx.constraintlayout.widget.Group
+import androidx.lifecycle.lifecycleScope
 import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.databinding.ActivityMainBinding
 import com.bimalghara.filedownloader.presentation.base.BaseActivity
 import com.bimalghara.filedownloader.utils.toGone
 import com.bimalghara.filedownloader.utils.toVisible
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 /**
@@ -41,7 +44,7 @@ class MainActivity : BaseActivity() {
 
         popupMenu()
 
-        binding.btnAdd.setOnClickListener {
+        binding.btnAddNew.setOnClickListener {
             showBottomSheetAddNew()
         }
     }
@@ -115,16 +118,20 @@ class MainActivity : BaseActivity() {
     }
 
     private fun setInitial(bottomSheet: Dialog) {
-        val groupAdd = bottomSheet.findViewById(R.id.groupAdd) as Group
+        val groupHeader = bottomSheet.findViewById(R.id.groupHeader) as Group
+        val groupAdd = bottomSheet.findViewById(R.id.groupAddNew) as Group
         val groupGrabbingInfo = bottomSheet.findViewById(R.id.groupGrabbingInfo) as Group
+        val groupEnqueue = bottomSheet.findViewById(R.id.groupEnqueue) as Group
+        groupHeader.toVisible()
         groupAdd.toVisible()
         groupGrabbingInfo.toGone()
+        groupEnqueue.toGone()
 
 
         val etLink = bottomSheet.findViewById(R.id.etLink) as AppCompatEditText
         val btnClearLink = bottomSheet.findViewById(R.id.btnClearLink) as AppCompatImageView
-        val btnCancel = bottomSheet.findViewById(R.id.btnCancel) as AppCompatButton
-        val btnAdd = bottomSheet.findViewById(R.id.btnAdd) as AppCompatButton
+        val btnCancel = bottomSheet.findViewById(R.id.btnCancelNew) as AppCompatButton
+        val btnAdd = bottomSheet.findViewById(R.id.btnAddNew) as AppCompatButton
 
         btnClearLink.setOnClickListener {
             etLink.setText("")
@@ -138,10 +145,30 @@ class MainActivity : BaseActivity() {
     }
 
     private fun setGrabbingInfo(bottomSheet: Dialog) {
-        val groupAdd = bottomSheet.findViewById(R.id.groupAdd) as Group
+        val groupHeader = bottomSheet.findViewById(R.id.groupHeader) as Group
+        val groupAdd = bottomSheet.findViewById(R.id.groupAddNew) as Group
         val groupGrabbingInfo = bottomSheet.findViewById(R.id.groupGrabbingInfo) as Group
+        val groupEnqueue = bottomSheet.findViewById(R.id.groupEnqueue) as Group
+        groupHeader.toGone()
         groupAdd.toGone()
         groupGrabbingInfo.toVisible()
+        groupEnqueue.toGone()
+
+        lifecycleScope.launch {
+            delay(2500)
+            setEnqueue(bottomSheet)
+        }
+    }
+
+    private fun setEnqueue(bottomSheet: Dialog) {
+        val groupHeader = bottomSheet.findViewById(R.id.groupHeader) as Group
+        val groupAdd = bottomSheet.findViewById(R.id.groupAddNew) as Group
+        val groupGrabbingInfo = bottomSheet.findViewById(R.id.groupGrabbingInfo) as Group
+        val groupEnqueue = bottomSheet.findViewById(R.id.groupEnqueue) as Group
+        groupHeader.toVisible()
+        groupAdd.toGone()
+        groupGrabbingInfo.toGone()
+        groupEnqueue.toVisible()
 
     }
 

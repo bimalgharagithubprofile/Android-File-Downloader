@@ -41,7 +41,7 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"/>
             <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btnAdd"
+                android:id="@+id/btnAddNew"
                 android:layout_width="wrap_content"
                 android:layout_height="@dimen/_38sdp"
                 app:layout_constraintEnd_toStartOf="@+id/ivMenu"
@@ -99,7 +99,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toTopOf="@+id/tvNoRecords"
-            app:srcCompat="@drawable/folder"/>
+            app:srcCompat="@drawable/folder_yellow"/>
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/tvNoRecords"
             android:layout_width="wrap_content"

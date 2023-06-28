@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
     android:background="@drawable/bottom_sheet_background">
 
     <androidx.appcompat.widget.AppCompatTextView
@@ -20,7 +21,7 @@
         android:id="@+id/headerDivider"
         android:layout_width="0dp"
         android:layout_height="@dimen/divider"
-        android:layout_marginTop="@dimen/_20sdp"
+        android:layout_marginTop="@dimen/_18sdp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvHeaderTittle"
@@ -28,16 +29,28 @@
 
     <!--Groups-->
     <androidx.constraintlayout.widget.Group
-        android:id="@+id/groupAdd"
+        android:id="@+id/groupHeader"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:constraint_referenced_ids="lbLink,etLink,btnClearLink,btnCancel,btnAdd"
+        app:constraint_referenced_ids="tvHeaderTittle,headerDivider"
         android:visibility="visible"/>
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/groupAddNew"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:constraint_referenced_ids="lbLink,etLink,btnClearLink,btnCancelNew,btnAddNew"
+        android:visibility="gone"/>
     <androidx.constraintlayout.widget.Group
         android:id="@+id/groupGrabbingInfo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:constraint_referenced_ids="grabbingInfo"
+        android:visibility="gone"/>
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/groupEnqueue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:constraint_referenced_ids="lbFileName,tvFileSize,etFileName,lbFileExt,lbDestinationFolder,etDestinationFolder,lbDownloadOverWiFi,cbDownloadOverWiFi,btnCloseEnqueue,btnAddEnqueue"
         android:visibility="gone"/>
 
     <!--add-->
@@ -82,13 +95,13 @@
         android:background="@android:color/transparent"
         />
     <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btnCancel"
+        android:id="@+id/btnCancelNew"
         android:layout_width="0dp"
         android:layout_height="@dimen/input_height"
         android:layout_marginTop="@dimen/_20sdp"
         android:layout_marginEnd="@dimen/_10sdp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/btnAdd"
+        app:layout_constraintEnd_toStartOf="@+id/btnAddNew"
         app:layout_constraintTop_toBottomOf="@+id/etLink"
         android:background="@drawable/button_secondary"
         android:text="@string/cancel"
@@ -97,12 +110,12 @@
         android:textColor="@color/text_title"
         android:fontFamily="@font/plus_jakarta_sans_bold"/>
     <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btnAdd"
+        android:id="@+id/btnAddNew"
         android:layout_width="0dp"
         android:layout_height="@dimen/input_height"
         android:layout_marginTop="@dimen/_20sdp"
         android:layout_marginStart="@dimen/_10sdp"
-        app:layout_constraintStart_toEndOf="@+id/btnCancel"
+        app:layout_constraintStart_toEndOf="@+id/btnCancelNew"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/etLink"
         android:background="@drawable/button_primary"
@@ -112,6 +125,7 @@
         android:textColor="@color/white"
         android:fontFamily="@font/plus_jakarta_sans_bold"/>
 
+    <!--grabbing-->
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/grabbingInfo"
         android:layout_width="wrap_content"
@@ -130,5 +144,142 @@
             />
     </androidx.appcompat.widget.LinearLayoutCompat>
 
+    <!--enqueue-->
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/lbFileName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_18sdp"
+        android:fontFamily="@font/plus_jakarta_sans_semi_bold"
+        android:text="@string/file_name"
+        android:textColor="@color/text_title"
+        android:textSize="@dimen/text_title"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/headerDivider" />
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvFileSize"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/plus_jakarta_sans_semi_bold"
+        tools:text="100.5 MB"
+        android:textColor="@color/grey_100"
+        android:textSize="@dimen/text_sub"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/lbFileName"
+        app:layout_constraintBottom_toBottomOf="@+id/lbFileName"/>
+    <androidx.appcompat.widget.AppCompatEditText
+        android:id="@+id/etFileName"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/input_height"
+        android:layout_marginTop="@dimen/_13sdp"
+        android:background="@drawable/edit_text"
+        android:ellipsize="end"
+        android:fontFamily="@font/plus_jakarta_sans_semi_bold"
+        android:gravity="center_vertical"
+        android:inputType="text"
+        android:maxLines="1"
+        android:scrollHorizontally="true"
+        android:textColor="@color/text_title"
+        android:textSize="@dimen/text_title"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/lbFileName" />
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/lbFileExt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="@+id/etFileName"
+        app:layout_constraintTop_toTopOf="@+id/etFileName"
+        app:layout_constraintBottom_toBottomOf="@+id/etFileName"
+        android:layout_marginEnd="@dimen/input_padding_width"
+        android:paddingTop="@dimen/_4sdp"
+        android:paddingBottom="@dimen/_4sdp"
+        android:paddingStart="@dimen/_11sdp"
+        android:paddingEnd="@dimen/_11sdp"
+        android:background="@color/bg2"
+        tools:text="EXE"
+        android:fontFamily="@font/plus_jakarta_sans_bold"
+        android:textColor="@color/grey_900"
+        android:textSize="@dimen/text_sub"/>
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/lbDestinationFolder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_18sdp"
+        android:fontFamily="@font/plus_jakarta_sans_semi_bold"
+        android:text="@string/destination_folder"
+        android:textColor="@color/text_title"
+        android:textSize="@dimen/text_title"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/etFileName" />
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/etDestinationFolder"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/input_height"
+        android:layout_marginTop="@dimen/_13sdp"
+        android:background="@drawable/edit_text"
+        android:drawableStart="@drawable/folder"
+        android:drawablePadding="@dimen/input_padding_width"
+        android:focusable="false"
+        android:fontFamily="@font/plus_jakarta_sans_semi_bold"
+        android:gravity="center_vertical"
+        android:textColor="@color/text_title"
+        android:textSize="@dimen/text_title"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/lbDestinationFolder" />
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/lbDownloadOverWiFi"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/input_height"
+        android:layout_marginTop="@dimen/_13sdp"
+        android:background="@drawable/edit_text_disable"
+        android:focusable="false"
+        android:fontFamily="@font/plus_jakarta_sans_semi_bold"
+        android:gravity="center_vertical"
+        android:text="@string/download_over_wi_fi_only"
+        android:textColor="@color/text_title"
+        android:textSize="@dimen/text_title"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/etDestinationFolder" />
+    <androidx.appcompat.widget.AppCompatCheckBox
+        android:id="@+id/cbDownloadOverWiFi"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="@+id/lbDownloadOverWiFi"
+        app:layout_constraintTop_toTopOf="@+id/lbDownloadOverWiFi"
+        app:layout_constraintBottom_toBottomOf="@+id/lbDownloadOverWiFi"
+        android:layout_marginEnd="@dimen/input_padding_width"/>
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnCloseEnqueue"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/input_height"
+        android:layout_marginTop="@dimen/_20sdp"
+        android:layout_marginEnd="@dimen/_10sdp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btnAddEnqueue"
+        app:layout_constraintTop_toBottomOf="@+id/cbDownloadOverWiFi"
+        android:background="@drawable/button_secondary"
+        android:text="@string/close"
+        android:textAllCaps="false"
+        android:textSize="@dimen/text_title"
+        android:textColor="@color/text_title"
+        android:fontFamily="@font/plus_jakarta_sans_bold"/>
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnAddEnqueue"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/input_height"
+        android:layout_marginTop="@dimen/_20sdp"
+        android:layout_marginStart="@dimen/_10sdp"
+        app:layout_constraintStart_toEndOf="@+id/btnCloseEnqueue"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cbDownloadOverWiFi"
+        android:background="@drawable/button_primary"
+        android:text="@string/add"
+        android:textAllCaps="false"
+        android:textSize="@dimen/text_title"
+        android:textColor="@color/white"
+        android:fontFamily="@font/plus_jakarta_sans_bold"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
