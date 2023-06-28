@@ -41,5 +41,6 @@
     <string name="successfully_added">Successfully Added</string>
     <string name="something_went_wrong">Something went wrong</string>
     <string name="back">Back</string>
+    <string name="waiting_in_queue">Waiting in queue</string>
 
 </resources>

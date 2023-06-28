@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_marginTop="@dimen/_10sdp"
+    android:layout_marginBottom="@dimen/_10sdp">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/ivIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/tvName"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/tvName"
+        app:srcCompat="@drawable/item_pause"
+        tools:ignore="ImageContrastCheck" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_10sdp"
+        android:layout_marginEnd="@dimen/_10sdp"
+        android:ellipsize="middle"
+        android:fontFamily="@font/plus_jakarta_sans_semi_bold"
+        android:gravity="start|center_vertical"
+        tools:text="Kafka Kuru Kuru...- 10 hour.mp3"
+        android:maxLines="1"
+        android:textColor="@color/text_title"
+        android:textSize="@dimen/text_sub"
+        app:layout_constraintStart_toEndOf="@+id/ivIcon"
+        app:layout_constraintEnd_toStartOf="@+id/ivClose"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/ivClose"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/_4sdp"
+        app:layout_constraintTop_toTopOf="@+id/tvName"
+        app:layout_constraintBottom_toBottomOf="@+id/tvName"
+        app:layout_constraintStart_toEndOf="@+id/tvName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/btn_close"
+        />
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progressIndicator"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_10sdp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvName"
+        app:trackColor="@color/bg1"
+        app:trackThickness="@dimen/_4sdp"
+        tools:progress="40" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvAction"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_5sdp"
+        android:fontFamily="@font/plus_jakarta_sans_semi_bold"
+        android:gravity="start"
+        tools:text="@string/waiting_in_queue"
+        android:textColor="@color/text_hint"
+        android:textSize="@dimen/text_hint"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/progressIndicator" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/tvFromSeparator"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginStart="@dimen/_10sdp"
+        app:srcCompat="@drawable/separator"
+        app:layout_constraintStart_toEndOf="@+id/tvAction"
+        app:layout_constraintEnd_toStartOf="@+id/tvFrom"
+        app:layout_constraintTop_toTopOf="@+id/tvAction"
+        app:layout_constraintBottom_toBottomOf="@+id/tvAction"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvFrom"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_10sdp"
+        android:layout_marginEnd="@dimen/_10sdp"
+        android:fontFamily="@font/plus_jakarta_sans_semi_bold"
+        android:gravity="start"
+        tools:text="drive.google.com"
+        android:textColor="@color/text_hint"
+        android:textSize="@dimen/text_hint"
+        app:layout_constraintStart_toEndOf="@+id/tvFromSeparator"
+        app:layout_constraintEnd_toStartOf="@+id/tvProgress"
+        app:layout_constraintTop_toTopOf="@+id/tvAction"
+        app:layout_constraintBottom_toBottomOf="@+id/tvAction" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvProgress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_5sdp"
+        android:fontFamily="@font/plus_jakarta_sans_semi_bold"
+        android:gravity="end"
+        tools:text="1%"
+        android:textColor="@color/text_hint"
+        android:textSize="@dimen/text_hint"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/progressIndicator" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
