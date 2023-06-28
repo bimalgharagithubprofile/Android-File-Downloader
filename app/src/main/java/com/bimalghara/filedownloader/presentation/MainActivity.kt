@@ -1,12 +1,10 @@
 package com.bimalghara.filedownloader.presentation
 
 import android.app.Dialog
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.view.Gravity
-import android.view.ViewGroup
-import android.view.Window
+import android.util.Log
+import android.view.View
+import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatImageView
@@ -18,6 +16,8 @@ import com.bimalghara.filedownloader.databinding.ActivityMainBinding
 import com.bimalghara.filedownloader.presentation.base.BaseActivity
 import com.bimalghara.filedownloader.utils.toGone
 import com.bimalghara.filedownloader.utils.toVisible
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -33,6 +33,9 @@ class MainActivity : BaseActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
+    var bottomSheetSettings: BottomSheetBehavior<FrameLayout>?=null
+    var bottomSheetAddNew: BottomSheetBehavior<FrameLayout>?=null
+
     override fun initViewBinding() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
@@ -44,9 +47,37 @@ class MainActivity : BaseActivity() {
 
         popupMenu()
 
-        binding.btnAddNew.setOnClickListener {
-            showBottomSheetAddNew()
+        val bottomSheetCallback: BottomSheetCallback = object : BottomSheetCallback(){
+            override fun onStateChanged(bottomSheet: View, newState: Int) {
+                when(newState) {
+                    BottomSheetBehavior.STATE_COLLAPSED -> { }
+                    BottomSheetBehavior.STATE_EXPANDED -> { binding.dimLayout.toVisible() }
+                    BottomSheetBehavior.STATE_DRAGGING -> { binding.dimLayout.toVisible() }
+                    BottomSheetBehavior.STATE_HALF_EXPANDED -> { binding.dimLayout.toVisible() }
+                    BottomSheetBehavior.STATE_HIDDEN -> { binding.dimLayout.toGone() }
+                    BottomSheetBehavior.STATE_SETTLING -> { }
+                }
+            }
+            override fun onSlide(bottomSheet: View, slideOffset: Float) { }
         }
+
+        bottomSheetSettings = BottomSheetBehavior.from(binding.bottomSheetSettings)
+        bottomSheetSettings?.isHideable = true
+        bottomSheetSettings?.state = BottomSheetBehavior.STATE_HIDDEN
+        bottomSheetSettings?.addBottomSheetCallback(bottomSheetCallback)
+
+        bottomSheetAddNew = BottomSheetBehavior.from(binding.bottomSheetAddNew)
+        bottomSheetAddNew?.isHideable = true
+        bottomSheetAddNew?.state = BottomSheetBehavior.STATE_HIDDEN
+        bottomSheetAddNew?.addBottomSheetCallback(bottomSheetCallback)
+
+
+        binding.btnAddNew.setOnClickListener {
+            setAddNew()
+            bottomSheetAddNew?.state = BottomSheetBehavior.STATE_EXPANDED
+        }
+
+        handleBottomSheetSettings()
     }
 
     private fun popupMenu() {
@@ -61,7 +92,7 @@ class MainActivity : BaseActivity() {
                     true
                 }
                 R.id.action_settings -> {
-                    showBottomSheetSettings()
+                    bottomSheetSettings?.state = BottomSheetBehavior.STATE_EXPANDED
                     true
                 }
                 else -> true
@@ -83,161 +114,100 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    private fun showBottomSheetSettings() {
-        val bottomSheet = Dialog(this)
-        bottomSheet.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        bottomSheet.setContentView(R.layout.bottom_sheet_settings)
-        bottomSheet.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        bottomSheet.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        bottomSheet.window?.attributes?.windowAnimations = R.style.BottomSheetAnimation
-        bottomSheet.window?.attributes?.gravity = Gravity.BOTTOM
-
-
-        val btnClose = bottomSheet.findViewById(R.id.btnClose) as AppCompatButton
-        val btnUpdate = bottomSheet.findViewById(R.id.btnUpdate) as AppCompatButton
-
-        btnClose.setOnClickListener {
-            bottomSheet.dismiss()
+    private fun handleBottomSheetSettings() {
+        binding.settingsSheet.seekBar.setCustomThumbDrawable(R.drawable.thumb)
+        binding.settingsSheet.seekBar.value = (3).toFloat()
+        binding.settingsSheet.seekBar.addOnChangeListener { slider, value, fromUser ->
+            Log.e(TAG, "seekbar value:${value.toInt()}")
         }
 
-        bottomSheet.show()
+        binding.settingsSheet.btnUpdate.setOnClickListener {
+            bottomSheetSettings?.state = BottomSheetBehavior.STATE_HIDDEN
+        }
+        binding.settingsSheet.btnClose.setOnClickListener {
+            bottomSheetSettings?.state = BottomSheetBehavior.STATE_HIDDEN
+        }
+
     }
 
-    private fun showBottomSheetAddNew() {
-        val bottomSheet = Dialog(this)
-        bottomSheet.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        bottomSheet.setContentView(R.layout.bottom_sheet_add_new)
-        bottomSheet.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        bottomSheet.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        bottomSheet.window?.attributes?.windowAnimations = R.style.BottomSheetAnimation
-        bottomSheet.window?.attributes?.gravity = Gravity.BOTTOM
-
-        setInitial(bottomSheet)
-
-        bottomSheet.show()
-    }
-
-    private fun setInitial(bottomSheet: Dialog) {
-        val groupHeader = bottomSheet.findViewById(R.id.groupHeader) as Group
-        val groupAdd = bottomSheet.findViewById(R.id.groupAddNew) as Group
-        val groupGrabbingInfo = bottomSheet.findViewById(R.id.groupGrabbingInfo) as Group
-        val groupEnqueue = bottomSheet.findViewById(R.id.groupEnqueue) as Group
-        val groupSuccess = bottomSheet.findViewById(R.id.groupSuccess) as Group
-        val groupFailed = bottomSheet.findViewById(R.id.groupFailed) as Group
-        groupHeader.toVisible()
-        groupAdd.toVisible()
-        groupGrabbingInfo.toGone()
-        groupEnqueue.toGone()
-        groupSuccess.toGone()
-        groupFailed.toGone()
+    private fun setAddNew() {
+        binding.addNewSheet.groupHeader.toVisible()
+        binding.addNewSheet.groupAddNew.toVisible()
+        binding.addNewSheet.groupGrabbingInfo.toGone()
+        binding.addNewSheet.groupEnqueue.toGone()
+        binding.addNewSheet.groupSuccess.toGone()
+        binding.addNewSheet.groupFailed.toGone()
 
 
-        val etLink = bottomSheet.findViewById(R.id.etLink) as AppCompatEditText
-        val btnClearLink = bottomSheet.findViewById(R.id.btnClearLink) as AppCompatImageView
-        val btnCancelNew = bottomSheet.findViewById(R.id.btnCancelNew) as AppCompatButton
-        val btnAddNew = bottomSheet.findViewById(R.id.btnAddNew) as AppCompatButton
-
-        btnClearLink.setOnClickListener {
-            etLink.setText("")
+        binding.addNewSheet.btnClearLink.setOnClickListener {
+            binding.addNewSheet.etLink.setText("")
         }
-        btnAddNew.setOnClickListener {
-            setGrabbingInfo(bottomSheet)
+        binding.addNewSheet.btnAddNew.setOnClickListener {
+            setGrabbingInfo()
         }
-        btnCancelNew.setOnClickListener {
-            bottomSheet.dismiss()
+        binding.addNewSheet.btnCancelNew.setOnClickListener {
+            bottomSheetAddNew?.state = BottomSheetBehavior.STATE_HIDDEN
         }
     }
 
-    private fun setGrabbingInfo(bottomSheet: Dialog) {
-        val groupHeader = bottomSheet.findViewById(R.id.groupHeader) as Group
-        val groupAdd = bottomSheet.findViewById(R.id.groupAddNew) as Group
-        val groupGrabbingInfo = bottomSheet.findViewById(R.id.groupGrabbingInfo) as Group
-        val groupEnqueue = bottomSheet.findViewById(R.id.groupEnqueue) as Group
-        val groupSuccess = bottomSheet.findViewById(R.id.groupSuccess) as Group
-        val groupFailed = bottomSheet.findViewById(R.id.groupFailed) as Group
-        groupHeader.toGone()
-        groupAdd.toGone()
-        groupGrabbingInfo.toVisible()
-        groupEnqueue.toGone()
-        groupSuccess.toGone()
-        groupFailed.toGone()
+    private fun setGrabbingInfo() {
+        binding.addNewSheet.groupHeader.toGone()
+        binding.addNewSheet.groupAddNew.toGone()
+        binding.addNewSheet.groupGrabbingInfo.toVisible()
+        binding.addNewSheet.groupEnqueue.toGone()
+        binding.addNewSheet.groupSuccess.toGone()
+        binding.addNewSheet.groupFailed.toGone()
 
         lifecycleScope.launch {
             delay(2500)
-            setEnqueue(bottomSheet)
+            setEnqueue()
         }
     }
 
-    private fun setEnqueue(bottomSheet: Dialog) {
-        val groupHeader = bottomSheet.findViewById(R.id.groupHeader) as Group
-        val groupAdd = bottomSheet.findViewById(R.id.groupAddNew) as Group
-        val groupGrabbingInfo = bottomSheet.findViewById(R.id.groupGrabbingInfo) as Group
-        val groupEnqueue = bottomSheet.findViewById(R.id.groupEnqueue) as Group
-        val groupSuccess = bottomSheet.findViewById(R.id.groupSuccess) as Group
-        val groupFailed = bottomSheet.findViewById(R.id.groupFailed) as Group
-        groupHeader.toVisible()
-        groupAdd.toGone()
-        groupGrabbingInfo.toGone()
-        groupEnqueue.toVisible()
-        groupSuccess.toGone()
-        groupFailed.toGone()
+    private fun setEnqueue() {
+        binding.addNewSheet.groupHeader.toVisible()
+        binding.addNewSheet.groupAddNew.toGone()
+        binding.addNewSheet.groupGrabbingInfo.toGone()
+        binding.addNewSheet.groupEnqueue.toVisible()
+        binding.addNewSheet.groupSuccess.toGone()
+        binding.addNewSheet.groupFailed.toGone()
 
-        val btnCloseEnqueue = bottomSheet.findViewById(R.id.btnCloseEnqueue) as AppCompatButton
-        val btnAddEnqueue = bottomSheet.findViewById(R.id.btnAddEnqueue) as AppCompatButton
-
-
-        btnAddEnqueue.setOnClickListener {
-            setSuccess(bottomSheet)
+        binding.addNewSheet.btnAddEnqueue.setOnClickListener {
+            setSuccess()
         }
-        btnCloseEnqueue.setOnClickListener {
-            bottomSheet.dismiss()
+        binding.addNewSheet.btnCloseEnqueue.setOnClickListener {
+            bottomSheetAddNew?.state = BottomSheetBehavior.STATE_HIDDEN
         }
     }
 
-    private fun setSuccess(bottomSheet: Dialog) {
-        val groupHeader = bottomSheet.findViewById(R.id.groupHeader) as Group
-        val groupAdd = bottomSheet.findViewById(R.id.groupAddNew) as Group
-        val groupGrabbingInfo = bottomSheet.findViewById(R.id.groupGrabbingInfo) as Group
-        val groupEnqueue = bottomSheet.findViewById(R.id.groupEnqueue) as Group
-        val groupSuccess = bottomSheet.findViewById(R.id.groupSuccess) as Group
-        val groupFailed = bottomSheet.findViewById(R.id.groupFailed) as Group
-        groupHeader.toGone()
-        groupAdd.toGone()
-        groupGrabbingInfo.toGone()
-        groupEnqueue.toGone()
-        groupSuccess.toVisible()
-        groupFailed.toGone()
+    private fun setSuccess() {
+        binding.addNewSheet.groupHeader.toGone()
+        binding.addNewSheet.groupAddNew.toGone()
+        binding.addNewSheet.groupGrabbingInfo.toGone()
+        binding.addNewSheet.groupEnqueue.toGone()
+        binding.addNewSheet.groupSuccess.toVisible()
+        binding.addNewSheet.groupFailed.toGone()
 
-        val btnDone = bottomSheet.findViewById(R.id.btnDone) as AppCompatButton
 
-        btnDone.setOnClickListener {
-            //bottomSheet.dismiss()
-            setFailed(bottomSheet)
+        binding.addNewSheet.btnDone.setOnClickListener {
+            bottomSheetAddNew?.state = BottomSheetBehavior.STATE_HIDDEN
         }
     }
 
-    private fun setFailed(bottomSheet: Dialog) {
-        val groupHeader = bottomSheet.findViewById(R.id.groupHeader) as Group
-        val groupAdd = bottomSheet.findViewById(R.id.groupAddNew) as Group
-        val groupGrabbingInfo = bottomSheet.findViewById(R.id.groupGrabbingInfo) as Group
-        val groupEnqueue = bottomSheet.findViewById(R.id.groupEnqueue) as Group
-        val groupSuccess = bottomSheet.findViewById(R.id.groupSuccess) as Group
-        val groupFailed = bottomSheet.findViewById(R.id.groupFailed) as Group
-        groupHeader.toGone()
-        groupAdd.toGone()
-        groupGrabbingInfo.toGone()
-        groupEnqueue.toGone()
-        groupSuccess.toGone()
-        groupFailed.toVisible()
+    private fun setFailed() {
+        binding.addNewSheet.groupHeader.toGone()
+        binding.addNewSheet.groupAddNew.toGone()
+        binding.addNewSheet.groupGrabbingInfo.toGone()
+        binding.addNewSheet.groupEnqueue.toGone()
+        binding.addNewSheet.groupSuccess.toGone()
+        binding.addNewSheet.groupFailed.toVisible()
 
-        val btnCloseFailed = bottomSheet.findViewById(R.id.btnCloseFailed) as AppCompatButton
-        val btnBackFailed = bottomSheet.findViewById(R.id.btnBackFailed) as AppCompatButton
 
-        btnBackFailed.setOnClickListener {
-            setInitial(bottomSheet)
+        binding.addNewSheet.btnBackFailed.setOnClickListener {
+            setAddNew()
         }
-        btnCloseFailed.setOnClickListener {
-            bottomSheet.dismiss()
+        binding.addNewSheet.btnCloseFailed.setOnClickListener {
+            bottomSheetAddNew?.state = BottomSheetBehavior.STATE_HIDDEN
         }
     }
 

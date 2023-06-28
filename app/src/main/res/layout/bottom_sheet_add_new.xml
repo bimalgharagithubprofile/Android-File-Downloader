@@ -2,14 +2,22 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:background="@drawable/bottom_sheet_background">
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/line"/>
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tvHeaderTittle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_10sdp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:fontFamily="@font/plus_jakarta_sans_semi_bold"
@@ -21,7 +29,7 @@
         android:id="@+id/headerDivider"
         android:layout_width="0dp"
         android:layout_height="@dimen/divider"
-        android:layout_marginTop="@dimen/_18sdp"
+        android:layout_marginTop="@dimen/_17sdp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvHeaderTittle"
@@ -70,7 +78,7 @@
         android:id="@+id/lbLink"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/_22sdp"
+        android:layout_marginTop="@dimen/_20sdp"
         android:fontFamily="@font/plus_jakarta_sans_semi_bold"
         android:text="@string/enter_link"
         android:textColor="@color/text_title"
@@ -162,7 +170,7 @@
         android:id="@+id/lbFileName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/_18sdp"
+        android:layout_marginTop="@dimen/_17sdp"
         android:fontFamily="@font/plus_jakarta_sans_semi_bold"
         android:text="@string/file_name"
         android:textColor="@color/text_title"
@@ -218,7 +226,7 @@
         android:id="@+id/lbDestinationFolder"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/_18sdp"
+        android:layout_marginTop="@dimen/_13sdp"
         android:fontFamily="@font/plus_jakarta_sans_semi_bold"
         android:text="@string/destination_folder"
         android:textColor="@color/text_title"

@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Button" parent="Widget.Material3.Button">
-        <item name="fontFamily">@font/plus_jakarta_sans_bold</item>
-        <item name="android:fontFamily">@font/plus_jakarta_sans_bold</item>
-        <item name="shapeAppearanceOverlay">@style/MyShapeAppearance</item>
-        <item name="android:textSize">@dimen/text_title</item>
-        <item name="android:gravity">center</item>
-        <item name="android:textAllCaps">false</item>
-    </style>
 
-    <style name="MyShapeAppearance">
-        <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">@dimen/corners_radius</item>
+    <style name="Widget.Material3.Tooltip" parent="Widget.MaterialComponents.Tooltip">
+        <item name="android:layout_margin">2dp</item>
+        <item name="android:textAppearance">@macro/m3_comp_plain_tooltip_supporting_text_type</item>
+        <item name="android:textColor">@color/green</item>
+        <item name="android:fontFamily">@font/plus_jakarta_sans_medium</item>
+        <item name="android:textSize">@dimen/text_title</item>
+        <item name="backgroundTint">@color/green_10</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:minWidth">28dp</item>
+        <item name="android:minHeight">28dp</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.Material3.Tooltip</item>
     </style>
+    <style name="ShapeAppearance.Material3.Tooltip" parent="ShapeAppearance.Material3.Corner.Large"/>
+
 </resources>

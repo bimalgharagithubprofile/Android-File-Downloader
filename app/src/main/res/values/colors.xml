@@ -14,6 +14,8 @@
 
     <color name="divider">#F1F1F1</color><!--divider-->
 
+    <color name="dim">#99000000</color><!--dim-->
+
     <color name="bg1">#E6E6E6</color><!--bg-->
     <color name="bg2">#EFEFEF</color><!--bg2-->
 
@@ -25,6 +27,7 @@
     <color name="orange">#FBC441</color>
     <color name="grey">#A7A7A7</color>
     <color name="green">#72BD6C</color>
+    <color name="green_10">#E6F4E5</color>
     <color name="red">#F26262</color>
     <color name="red_10">#FFEBEB</color>
 
