@@ -1,8 +1,10 @@
 package com.bimalghara.filedownloader.data.di
 
+import android.app.Application
+import androidx.room.Room
 import com.bimalghara.filedownloader.common.dispatcher.DispatcherProviderSource
-import com.bimalghara.filedownloader.data.network.RemoteDataImpl
-import com.bimalghara.filedownloader.data.network.RemoteDataSource
+import com.bimalghara.filedownloader.data.local.database.AppDatabase
+import com.bimalghara.filedownloader.data.local.database.DownloadsDao
 import com.bimalghara.filedownloader.data.network.retrofit.ApiServiceGenerator
 import com.bimalghara.filedownloader.data.repository.DownloaderRepositoryImpl
 import com.bimalghara.filedownloader.domain.repository.DownloaderRepositorySource
@@ -17,22 +19,33 @@ import javax.inject.Singleton
  */
 
 
-
 @InstallIn(SingletonComponent::class)
 @Module
 class DataModuleDataSources {
 
     @Provides
     @Singleton
-    fun provideDownloadRepository(dispatcherProviderSource: DispatcherProviderSource, remoteDataSource: RemoteDataSource): DownloaderRepositorySource {
-        return DownloaderRepositoryImpl(dispatcherProviderSource = dispatcherProviderSource, remoteDataSource = remoteDataSource)
+    fun provideDatabase(app: Application): AppDatabase {
+        return Room.databaseBuilder(
+            app,
+            AppDatabase::class.java,
+            AppDatabase.DATABASE_NAME
+        ).build()
     }
-
 
     @Provides
     @Singleton
-    fun provideRemoteData(serviceGenerator: ApiServiceGenerator): RemoteDataSource {
-        return RemoteDataImpl(serviceGenerator)
+    fun provideDownloaderRepository(
+        dispatcherProviderSource: DispatcherProviderSource,
+        serviceGenerator: ApiServiceGenerator,
+        downloadsDao: DownloadsDao
+    ): DownloaderRepositorySource {
+        return DownloaderRepositoryImpl(
+            dispatcherProviderSource = dispatcherProviderSource,
+            serviceGenerator = serviceGenerator,
+            downloadsDao = downloadsDao
+        )
     }
+
 
 }

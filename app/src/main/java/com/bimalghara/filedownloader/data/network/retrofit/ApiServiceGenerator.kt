@@ -25,7 +25,7 @@ class ApiServiceGenerator @Inject constructor() {
         okHttpBuilder.readTimeout(timeoutRead.toLong(), TimeUnit.SECONDS)
         val client = okHttpBuilder.build()
         retrofit = Retrofit.Builder()
-                .baseUrl("BASE_URL").client(client)
+                .baseUrl("https://base_url.com").client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
     }

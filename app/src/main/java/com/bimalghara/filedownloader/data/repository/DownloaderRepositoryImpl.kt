@@ -3,8 +3,9 @@ package com.bimalghara.filedownloader.data.repository
 import android.content.Context
 import android.util.Log
 import com.bimalghara.filedownloader.common.dispatcher.DispatcherProviderSource
+import com.bimalghara.filedownloader.data.local.database.DownloadsDao
 import com.bimalghara.filedownloader.data.network.DownloadCallback
-import com.bimalghara.filedownloader.data.network.RemoteDataSource
+import com.bimalghara.filedownloader.data.network.retrofit.ApiServiceGenerator
 import com.bimalghara.filedownloader.domain.model.FileDetails
 import com.bimalghara.filedownloader.domain.repository.DownloaderRepositorySource
 import okhttp3.ResponseBody
@@ -18,7 +19,8 @@ import javax.inject.Inject
 
 class DownloaderRepositoryImpl @Inject constructor(
     private val dispatcherProviderSource: DispatcherProviderSource,
-    private val remoteDataSource: RemoteDataSource
+    private val serviceGenerator: ApiServiceGenerator,
+    private val downloadsDao: DownloadsDao?,
 ) : DownloaderRepositorySource {
     private val logTag = javaClass.simpleName
 
@@ -27,28 +29,7 @@ class DownloaderRepositoryImpl @Inject constructor(
         url: String
     ): FileDetails {
 
-        /*val callback: Function3<Float, Long, String, Unit> =
-            { progress: Float, o2: Long?, line: String? ->
-                Log.e(logTag, "callback: $progress, $o2, $line")
-            }
 
-        return try {
-            *//*val result = YTDLP.execute(appContext, url, callback)
-
-            //convert raw response to DTO
-            val videoInfoDTO = ObjectMapper().readValue(result.out, VideoInfoDTO::class.java)
-
-            //convert DTO to Model
-            val converted = videoInfoDTO.toDomain()
-
-            converted*//*
-            FileDetails()
-
-        } catch (e: CustomException) {
-            throw e
-        } catch (ex: Exception) {
-            throw CustomException(cause = "Unable to parse video information: ${ex.localizedMessage}")
-        }*/
         return FileDetails()
     }
 
@@ -69,7 +50,7 @@ class DownloaderRepositoryImpl @Inject constructor(
         val videoFile = File(videoDir, videoRawName)
         if (!videoFile.exists()) videoFile.createNewFile()
 
-        remoteDataSource.requestDownload(url, object : DownloadCallback {
+        download(url, object : DownloadCallback {
             override fun onDataReceive(responseBody: ResponseBody, callback: DownloadCallback) {
                 writeResponseBodyToDisk(responseBody, videoFile.absolutePath, callback)
             }
