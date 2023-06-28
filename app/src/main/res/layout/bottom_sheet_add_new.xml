@@ -52,6 +52,18 @@
         android:layout_height="wrap_content"
         app:constraint_referenced_ids="lbFileName,tvFileSize,etFileName,lbFileExt,lbDestinationFolder,etDestinationFolder,lbDownloadOverWiFi,cbDownloadOverWiFi,btnCloseEnqueue,btnAddEnqueue"
         android:visibility="gone"/>
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/groupSuccess"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:constraint_referenced_ids="success,btnDone"
+        android:visibility="gone"/>
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/groupFailed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:constraint_referenced_ids="failed,btnCloseFailed,btnBackFailed"
+        android:visibility="gone"/>
 
     <!--add-->
     <androidx.appcompat.widget.AppCompatTextView
@@ -128,12 +140,13 @@
     <!--grabbing-->
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/grabbingInfo"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="@dimen/_280sdp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:gravity="center">
+        android:gravity="center"
+        android:orientation="vertical">
         <androidx.appcompat.widget.AppCompatTextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -277,6 +290,110 @@
         app:layout_constraintTop_toBottomOf="@+id/cbDownloadOverWiFi"
         android:background="@drawable/button_primary"
         android:text="@string/add"
+        android:textAllCaps="false"
+        android:textSize="@dimen/text_title"
+        android:textColor="@color/white"
+        android:fontFamily="@font/plus_jakarta_sans_bold"/>
+
+    <!--success-->
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/success"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/_232sdp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/btnDone"
+        android:gravity="center"
+        android:orientation="vertical">
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="@dimen/_60sdp"
+            android:layout_height="@dimen/_60sdp"
+            app:srcCompat="@drawable/success"/>
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_20sdp"
+            android:fontFamily="@font/plus_jakarta_sans_semi_bold"
+            android:text="@string/successfully_added"
+            android:textColor="@color/text_title"
+            android:textSize="@dimen/text_header"
+            />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnDone"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/input_height"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/success"
+        android:background="@drawable/button_primary"
+        android:text="@string/done"
+        android:textAllCaps="false"
+        android:textSize="@dimen/text_title"
+        android:textColor="@color/white"
+        android:fontFamily="@font/plus_jakarta_sans_bold"/>
+
+    <!--failed-->
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/failed"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/_232sdp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/btnDone"
+        android:gravity="center"
+        android:orientation="vertical">
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="@dimen/_60sdp"
+            android:layout_height="@dimen/_60sdp"
+            app:srcCompat="@drawable/failed"/>
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_20sdp"
+            android:fontFamily="@font/plus_jakarta_sans_semi_bold"
+            android:text="@string/something_went_wrong"
+            android:textColor="@color/text_title"
+            android:textSize="@dimen/text_header"/>
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_13sdp"
+            android:fontFamily="@font/plus_jakarta_sans_medium"
+            android:padding="@dimen/input_padding_width"
+            android:background="@color/red_10"
+            tools:text="@string/something_went_wrong"
+            android:textColor="@color/text_title"
+            android:textSize="@dimen/text_sub"/>
+    </androidx.appcompat.widget.LinearLayoutCompat>
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnCloseFailed"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/input_height"
+        android:layout_marginTop="@dimen/_20sdp"
+        android:layout_marginEnd="@dimen/_10sdp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btnBackFailed"
+        app:layout_constraintTop_toBottomOf="@+id/failed"
+        android:background="@drawable/button_secondary"
+        android:text="@string/close"
+        android:textAllCaps="false"
+        android:textSize="@dimen/text_title"
+        android:textColor="@color/text_title"
+        android:fontFamily="@font/plus_jakarta_sans_bold"/>
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnBackFailed"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/input_height"
+        android:layout_marginTop="@dimen/_20sdp"
+        android:layout_marginStart="@dimen/_10sdp"
+        app:layout_constraintStart_toEndOf="@+id/btnCloseFailed"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/failed"
+        android:background="@drawable/button_primary"
+        android:text="@string/back"
         android:textAllCaps="false"
         android:textSize="@dimen/text_title"
         android:textColor="@color/white"

@@ -37,5 +37,9 @@
     <string name="file_name">File Name</string>
     <string name="destination_folder">Destination Folder</string>
     <string name="download_over_wi_fi_only">Download over Wi-Fi only</string>
+    <string name="done">Done</string>
+    <string name="successfully_added">Successfully Added</string>
+    <string name="something_went_wrong">Something went wrong</string>
+    <string name="back">Back</string>
 
 </resources>

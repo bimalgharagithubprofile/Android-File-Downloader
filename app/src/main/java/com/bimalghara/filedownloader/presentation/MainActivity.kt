@@ -122,24 +122,28 @@ class MainActivity : BaseActivity() {
         val groupAdd = bottomSheet.findViewById(R.id.groupAddNew) as Group
         val groupGrabbingInfo = bottomSheet.findViewById(R.id.groupGrabbingInfo) as Group
         val groupEnqueue = bottomSheet.findViewById(R.id.groupEnqueue) as Group
+        val groupSuccess = bottomSheet.findViewById(R.id.groupSuccess) as Group
+        val groupFailed = bottomSheet.findViewById(R.id.groupFailed) as Group
         groupHeader.toVisible()
         groupAdd.toVisible()
         groupGrabbingInfo.toGone()
         groupEnqueue.toGone()
+        groupSuccess.toGone()
+        groupFailed.toGone()
 
 
         val etLink = bottomSheet.findViewById(R.id.etLink) as AppCompatEditText
         val btnClearLink = bottomSheet.findViewById(R.id.btnClearLink) as AppCompatImageView
-        val btnCancel = bottomSheet.findViewById(R.id.btnCancelNew) as AppCompatButton
-        val btnAdd = bottomSheet.findViewById(R.id.btnAddNew) as AppCompatButton
+        val btnCancelNew = bottomSheet.findViewById(R.id.btnCancelNew) as AppCompatButton
+        val btnAddNew = bottomSheet.findViewById(R.id.btnAddNew) as AppCompatButton
 
         btnClearLink.setOnClickListener {
             etLink.setText("")
         }
-        btnAdd.setOnClickListener {
+        btnAddNew.setOnClickListener {
             setGrabbingInfo(bottomSheet)
         }
-        btnCancel.setOnClickListener {
+        btnCancelNew.setOnClickListener {
             bottomSheet.dismiss()
         }
     }
@@ -149,10 +153,14 @@ class MainActivity : BaseActivity() {
         val groupAdd = bottomSheet.findViewById(R.id.groupAddNew) as Group
         val groupGrabbingInfo = bottomSheet.findViewById(R.id.groupGrabbingInfo) as Group
         val groupEnqueue = bottomSheet.findViewById(R.id.groupEnqueue) as Group
+        val groupSuccess = bottomSheet.findViewById(R.id.groupSuccess) as Group
+        val groupFailed = bottomSheet.findViewById(R.id.groupFailed) as Group
         groupHeader.toGone()
         groupAdd.toGone()
         groupGrabbingInfo.toVisible()
         groupEnqueue.toGone()
+        groupSuccess.toGone()
+        groupFailed.toGone()
 
         lifecycleScope.launch {
             delay(2500)
@@ -165,11 +173,72 @@ class MainActivity : BaseActivity() {
         val groupAdd = bottomSheet.findViewById(R.id.groupAddNew) as Group
         val groupGrabbingInfo = bottomSheet.findViewById(R.id.groupGrabbingInfo) as Group
         val groupEnqueue = bottomSheet.findViewById(R.id.groupEnqueue) as Group
+        val groupSuccess = bottomSheet.findViewById(R.id.groupSuccess) as Group
+        val groupFailed = bottomSheet.findViewById(R.id.groupFailed) as Group
         groupHeader.toVisible()
         groupAdd.toGone()
         groupGrabbingInfo.toGone()
         groupEnqueue.toVisible()
+        groupSuccess.toGone()
+        groupFailed.toGone()
 
+        val btnCloseEnqueue = bottomSheet.findViewById(R.id.btnCloseEnqueue) as AppCompatButton
+        val btnAddEnqueue = bottomSheet.findViewById(R.id.btnAddEnqueue) as AppCompatButton
+
+
+        btnAddEnqueue.setOnClickListener {
+            setSuccess(bottomSheet)
+        }
+        btnCloseEnqueue.setOnClickListener {
+            bottomSheet.dismiss()
+        }
+    }
+
+    private fun setSuccess(bottomSheet: Dialog) {
+        val groupHeader = bottomSheet.findViewById(R.id.groupHeader) as Group
+        val groupAdd = bottomSheet.findViewById(R.id.groupAddNew) as Group
+        val groupGrabbingInfo = bottomSheet.findViewById(R.id.groupGrabbingInfo) as Group
+        val groupEnqueue = bottomSheet.findViewById(R.id.groupEnqueue) as Group
+        val groupSuccess = bottomSheet.findViewById(R.id.groupSuccess) as Group
+        val groupFailed = bottomSheet.findViewById(R.id.groupFailed) as Group
+        groupHeader.toGone()
+        groupAdd.toGone()
+        groupGrabbingInfo.toGone()
+        groupEnqueue.toGone()
+        groupSuccess.toVisible()
+        groupFailed.toGone()
+
+        val btnDone = bottomSheet.findViewById(R.id.btnDone) as AppCompatButton
+
+        btnDone.setOnClickListener {
+            //bottomSheet.dismiss()
+            setFailed(bottomSheet)
+        }
+    }
+
+    private fun setFailed(bottomSheet: Dialog) {
+        val groupHeader = bottomSheet.findViewById(R.id.groupHeader) as Group
+        val groupAdd = bottomSheet.findViewById(R.id.groupAddNew) as Group
+        val groupGrabbingInfo = bottomSheet.findViewById(R.id.groupGrabbingInfo) as Group
+        val groupEnqueue = bottomSheet.findViewById(R.id.groupEnqueue) as Group
+        val groupSuccess = bottomSheet.findViewById(R.id.groupSuccess) as Group
+        val groupFailed = bottomSheet.findViewById(R.id.groupFailed) as Group
+        groupHeader.toGone()
+        groupAdd.toGone()
+        groupGrabbingInfo.toGone()
+        groupEnqueue.toGone()
+        groupSuccess.toGone()
+        groupFailed.toVisible()
+
+        val btnCloseFailed = bottomSheet.findViewById(R.id.btnCloseFailed) as AppCompatButton
+        val btnBackFailed = bottomSheet.findViewById(R.id.btnBackFailed) as AppCompatButton
+
+        btnBackFailed.setOnClickListener {
+            setInitial(bottomSheet)
+        }
+        btnCloseFailed.setOnClickListener {
+            bottomSheet.dismiss()
+        }
     }
 
 }
