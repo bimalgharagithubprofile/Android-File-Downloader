@@ -38,12 +38,12 @@ class DataModuleDataSources {
     fun provideDownloaderRepository(
         dispatcherProviderSource: DispatcherProviderSource,
         serviceGenerator: ApiServiceGenerator,
-        downloadsDao: DownloadsDao
+        db: AppDatabase
     ): DownloaderRepositorySource {
         return DownloaderRepositoryImpl(
             dispatcherProviderSource = dispatcherProviderSource,
             serviceGenerator = serviceGenerator,
-            downloadsDao = downloadsDao
+            downloadsDao = db.downloadsDao
         )
     }
 

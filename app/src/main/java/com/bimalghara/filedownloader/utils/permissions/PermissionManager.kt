@@ -3,24 +3,25 @@ package com.bimalghara.filedownloader.utils.permissions
 import android.app.AlertDialog
 import android.content.pm.PackageManager
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import com.bimalghara.filedownloader.R
 import java.lang.ref.WeakReference
 
-class PermissionManager private constructor(private val fragment: WeakReference<Fragment>) {
+class PermissionManager private constructor(private val activity: WeakReference<AppCompatActivity>) {
 
     private val requiredPermissions = mutableListOf<Permissions>()
     private var rationale: String? = null
     private var callback: (Boolean) -> Unit = {}
 
     private val permissionCheck =
-        fragment.get()?.registerForActivityResult(RequestMultiplePermissions()) { grantResults ->
+        activity.get()?.registerForActivityResult(RequestMultiplePermissions()) { grantResults ->
             sendResultAndCleanUp(grantResults)
         }
 
+
     companion object {
-        fun from(fragment: Fragment) = PermissionManager(WeakReference(fragment))
+        fun from(activity: AppCompatActivity) = PermissionManager(WeakReference(activity))
     }
 
     fun rationale(description: String): PermissionManager {
@@ -39,7 +40,7 @@ class PermissionManager private constructor(private val fragment: WeakReference<
     }
 
     private fun handlePermissionRequest() {
-        fragment.get()?.let { fragment ->
+        activity.get()?.let { fragment ->
             when {
                 areAllPermissionsGranted(fragment) -> sendPositiveResult()
                 shouldShowPermissionRationale(fragment) -> displayRationale(fragment)
@@ -48,12 +49,12 @@ class PermissionManager private constructor(private val fragment: WeakReference<
         }
     }
 
-    private fun displayRationale(fragment: Fragment) {
-        AlertDialog.Builder(fragment.requireContext())
-            .setTitle(fragment.getString(R.string.dialog_permission_title))
-            .setMessage(rationale ?: fragment.getString(R.string.dialog_permission_default_message))
+    private fun displayRationale(activity: AppCompatActivity) {
+        AlertDialog.Builder(activity.applicationContext)
+            .setTitle(activity.getString(R.string.dialog_permission_title))
+            .setMessage(rationale ?: activity.getString(R.string.dialog_permission_default_message))
             .setCancelable(false)
-            .setPositiveButton(fragment.getString(R.string.dialog_permission_button_positive)) { _, _ ->
+            .setPositiveButton(activity.getString(R.string.dialog_permission_button_positive)) { _, _ ->
                 requestPermissions()
             }
             .show()
@@ -78,24 +79,24 @@ class PermissionManager private constructor(private val fragment: WeakReference<
         permissionCheck?.launch(getPermissionList())
     }
 
-    private fun areAllPermissionsGranted(fragment: Fragment) =
-        requiredPermissions.all { it.isGranted(fragment) }
+    private fun areAllPermissionsGranted(activity: AppCompatActivity) =
+        requiredPermissions.all { it.isGranted(activity) }
 
-    private fun shouldShowPermissionRationale(fragment: Fragment) =
-        requiredPermissions.any { it.requiresRationale(fragment) }
+    private fun shouldShowPermissionRationale(activity: AppCompatActivity) =
+        requiredPermissions.any { it.requiresRationale(activity) }
 
     private fun getPermissionList() =
         requiredPermissions.flatMap { it.permissions.toList() }.toTypedArray()
 
-    private fun Permissions.isGranted(fragment: Fragment) =
-        permissions.all { hasPermission(fragment, it) }
+    private fun Permissions.isGranted(activity: AppCompatActivity) =
+        permissions.all { hasPermission(activity, it) }
 
-    private fun Permissions.requiresRationale(fragment: Fragment) =
-        permissions.any { fragment.shouldShowRequestPermissionRationale(it) }
+    private fun Permissions.requiresRationale(activity: AppCompatActivity) =
+        permissions.any { activity.shouldShowRequestPermissionRationale(it) }
 
-    private fun hasPermission(fragment: Fragment, permission: String) =
+    private fun hasPermission(activity: AppCompatActivity, permission: String) =
         ContextCompat.checkSelfPermission(
-            fragment.requireContext(),
+            activity.applicationContext,
             permission
         ) == PackageManager.PERMISSION_GRANTED
 }

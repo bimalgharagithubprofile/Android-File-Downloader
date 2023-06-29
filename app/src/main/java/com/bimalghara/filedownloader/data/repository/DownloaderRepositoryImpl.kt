@@ -2,15 +2,22 @@ package com.bimalghara.filedownloader.data.repository
 
 import android.content.Context
 import android.util.Log
+import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.common.dispatcher.DispatcherProviderSource
 import com.bimalghara.filedownloader.data.local.database.DownloadsDao
 import com.bimalghara.filedownloader.data.network.DownloadCallback
 import com.bimalghara.filedownloader.data.network.retrofit.ApiServiceGenerator
+import com.bimalghara.filedownloader.data.network.retrofit.service.ApiServiceDownload
 import com.bimalghara.filedownloader.domain.model.FileDetails
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.domain.repository.DownloaderRepositorySource
+import com.bimalghara.filedownloader.utils.DownloadStatus
+import com.bimalghara.filedownloader.utils.FunUtil.createFileDetailsFromHeaders
+import com.bimalghara.filedownloader.utils.ResourceWrapper
+import com.bimalghara.filedownloader.utils.getStringFromResource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import okhttp3.ResponseBody
 import java.io.IOException
 import javax.inject.Inject
@@ -28,6 +35,36 @@ class DownloaderRepositoryImpl @Inject constructor(
     private val logTag = javaClass.simpleName
 
 
+    override suspend fun addQueue(
+        appContext: Context,
+        wifiOnly: Boolean,
+        fileDetails: FileDetails,
+        selectedDirectory: String
+    ): ResourceWrapper<Boolean> {
+        try {
+            val data = DownloadEntity(
+                url = "",
+                wifiOnly = wifiOnly,
+                selectedFolder = "",
+                name = "",//name + ext
+                ext = "",
+                sizeTotal = 0,//in bytes [total]
+                downloadStatus = DownloadStatus.WAITING.name,
+                updatedAt = System.currentTimeMillis()
+            )
+
+            val id = downloadsDao?.addDownload(data) ?: -1
+
+            //eeeee
+
+            return ResourceWrapper.Success(data = true)
+        } catch (e: Exception){
+            e.printStackTrace()
+            return ResourceWrapper.Error(e.localizedMessage ?: appContext.getStringFromResource(R.string.error_failed_to_queue))
+        }
+    }
+
+
     override suspend fun requestDownloadsFromLocal(): Flow<List<DownloadEntity>> {
         return downloadsDao?.getDownloads() ?: flow { emit(emptyList()) }
     }
@@ -35,11 +72,25 @@ class DownloaderRepositoryImpl @Inject constructor(
     override suspend fun requestFileDetailsFromNetwork(
         appContext: Context,
         url: String
-    ): FileDetails {
+    ): Flow<ResourceWrapper<FileDetails>>  = flow {
+        emit(ResourceWrapper.Loading())
+        try {
+            val fileInfoService = serviceGenerator.createApiService(ApiServiceDownload::class.java)
 
+            val response = fileInfoService.getFileDetails(url).execute()
+            if (response.isSuccessful) {
 
-        return FileDetails()
-    }
+                val fileDetails = createFileDetailsFromHeaders(url, response.headers())
+
+                emit(ResourceWrapper.Success(data = fileDetails))
+            } else {
+                emit(ResourceWrapper.Error(appContext.getStringFromResource(R.string.network_not_supported)))
+            }
+
+        } catch (e: Exception) {
+            emit(ResourceWrapper.Error(e.localizedMessage ?: appContext.getStringFromResource(R.string.error_default)))
+        }
+    }.flowOn(dispatcherProviderSource.io)
 
     override suspend fun requestDownloadFileFromNetwork(
         appContext: Context,

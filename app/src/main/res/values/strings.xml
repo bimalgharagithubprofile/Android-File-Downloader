@@ -9,17 +9,19 @@
     <!--error-->
     <string name="no_internet">Please check your internet connection</string>
     <string name="network_error">Network error, could get data,please try again!</string>
+    <string name="network_not_supported">Server could not return Headers data!</string>
     <string name="socket_timeout">Connection timeout!</string>
     <string name="error_default">Something went wrong!</string>
     <string name="error_no_permission">Runtime permissions required !</string>
     <string name="error_select_directory_failed">Failed to select directory!</string>
     <string name="error_write_permission">No write permission to save files!</string>
-    <string name="error_empty_fields">Url is invalid! Try another url.</string>
+    <string name="error_invalid_url">Url is invalid! Try another url.</string>
     <string name="error_invalid_directory">Select a valid destination directory!</string>
     <string name="error_protected_directory">Create or choose another folder.\nThis is to protect privacy</string>
-    <string name="error_invalid_audio_path">Audio file not found !</string>
     <string name="error_invalid_destination_path">Destination folder is wrong!</string>
+    <string name="error_invalid_name">Bad fIle name!</string>
     <string name="error_invalid_extension">Bad fIle extension!</string>
+    <string name="error_failed_to_queue">Failed to add!</string>
 
 
     <string name="add">Add</string>
