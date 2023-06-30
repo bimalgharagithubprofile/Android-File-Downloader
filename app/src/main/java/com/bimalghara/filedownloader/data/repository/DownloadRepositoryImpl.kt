@@ -220,7 +220,7 @@ class DownloadRepositoryImpl @Inject constructor(
 
 
     private suspend fun updateDownloadStarted(id: Int, initialProgress: Int) {
-        logs(logTag, "updateDownloadStarted: id=> $id")
+        logs(logTag, "updateDownloadStarted: id=> $id ($initialProgress)")
         downloadsDao.updateDownloadProgress(id, DownloadStatus.DOWNLOADING.name, initialProgress, System.currentTimeMillis())
     }
     private suspend fun updateDownloadProgress(id: Int, currentProgress: Int) {
