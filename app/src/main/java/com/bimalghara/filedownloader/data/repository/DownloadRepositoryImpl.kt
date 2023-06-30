@@ -51,7 +51,7 @@ class DownloadRepositoryImpl @Inject constructor(
         pauseFlags[downloadEntity.id] = AtomicBoolean(false)
         cancellationFlags[downloadEntity.id] = AtomicBoolean(false)
 
-        downloadJobs[downloadEntity.id] = coroutineScope.launch {
+        downloadJobs[downloadEntity.id] = coroutineScope.launch(dispatcherProviderSource.io) {
 
             var destinationFileSize = 0L
             val outputFile = File(tmpPath)
@@ -134,7 +134,7 @@ class DownloadRepositoryImpl @Inject constructor(
         downloadEntity: DownloadEntity,
         tmpPath: String,
         callback: DownloadCallback
-    ) = withContext(dispatcherProviderSource.io) {
+    ) {
         try {
             val tempFile = File(tmpPath)
             val raf = RandomAccessFile(tempFile, "rw")
@@ -182,7 +182,7 @@ class DownloadRepositoryImpl @Inject constructor(
                     removeIdFromMap(downloadEntity.id)
                     updateDownloadPaused(downloadEntity.id, InterruptedBy.USER)
                     callback.onDownloadPaused(downloadEntity.id)
-                    return@withContext
+                    return
                 }
                 // canceled
                 if (cancellationFlags.containsKey(downloadEntity.id) && cancellationFlags[downloadEntity.id]?.get() == true) {
@@ -192,9 +192,9 @@ class DownloadRepositoryImpl @Inject constructor(
                     body.close()
                     removeIdFromMap(downloadEntity.id)
                     if (tempFile.exists()) tempFile.delete()
-                    updateDownloadCanceled(downloadEntity.id)
+                    updateDownloadCanceled(downloadEntity)
                     callback.onDownloadCancelled(downloadEntity.id)
-                    return@withContext
+                    return
                 }
             }
 
@@ -235,9 +235,9 @@ class DownloadRepositoryImpl @Inject constructor(
         logs(logTag, "updateDownloadPaused: id=> $id | by=> ${interruptedBy.name}")
         downloadsDao.updateDownloadEnd(id, DownloadStatus.PAUSED.name, interruptedBy.name, System.currentTimeMillis())
     }
-    private suspend fun updateDownloadCanceled(id: Int) {
-        logs(logTag, "updateDownloadCanceled: id=> $id")
-        downloadsDao.deleteDownload(id)
+    private fun updateDownloadCanceled(downloadEntity: DownloadEntity) = coroutineScope.launch(dispatcherProviderSource.io) {
+        logs(logTag, "updateDownloadCanceled: id=> ${downloadEntity.id}")
+        downloadsDao.deleteDownload(downloadEntity)
     }
     private suspend fun updateDownloadFailed(id: Int) {
         logs(logTag, "updateDownloadFailed: id=> $id")

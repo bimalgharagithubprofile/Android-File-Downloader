@@ -1,9 +1,6 @@
 package com.bimalghara.filedownloader.data.local.database
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room.*
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -31,7 +28,7 @@ interface DownloadsDao {
     @Query("UPDATE DownloadEntity SET downloadStatus=:downloadStatus, interruptedBy=:interruptedBy, updatedAt=:timestamp WHERE id=:id")
     suspend fun updateDownloadEnd(id: Int, downloadStatus: String, interruptedBy: String?, timestamp: Long)
 
-    @Query("DELETE FROM DownloadEntity WHERE id=:id")
-    suspend fun deleteDownload(id: Int)
+    @Delete
+    suspend fun deleteDownload(downloadEntity: DownloadEntity)
 
 }
