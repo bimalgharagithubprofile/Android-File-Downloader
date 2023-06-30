@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
 import android.graphics.Color
+import android.net.Uri
 import android.os.*
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -157,7 +158,7 @@ class DownloadService : Service() {
                 networkStatusLive = it
                 when(it){
                     NetworkConnectivity.Status.WIFI -> actionDownload(PopType.RESUME_WIFI.name)
-                    NetworkConnectivity.Status.CELLULAR -> actionDownload(PopType.RESUME_CELLULAR.name)
+                    NetworkConnectivity.Status.CELLULAR -> Unit
                     else -> Unit
                 }
             }
@@ -180,11 +181,12 @@ class DownloadService : Service() {
     }
 
     private fun actionDownload(type: String) = coroutineScope.launch {
+        logs(logTag, "action Download [$type]")
         try {
             val settingParallelDownload =
                 dataStore.getString(DS_KEY_SETTING_PARALLEL_DOWNLOAD)?.toInt()
                     ?: DEFAULT_PARALLEL_DOWNLOAD_LIMIT.toInt()
-            logs(logTag, "settingParallelDownload => $settingParallelDownload")
+            logs(logTag, "setting Parallel Download => $settingParallelDownload")
 
             var availableParallelDownload = settingParallelDownload
 
@@ -227,7 +229,7 @@ class DownloadService : Service() {
                     for (n in 0 until allowWifi){
                         val item = interruptedNoWiFiItems[n]
                         if(item.wifiOnly) {
-                            downloadFileFromNetwork(item)
+                            downloadFileFromNetwork(this@DownloadService, item)
                         } else
                             logs(logTag, "resume: wifi: Failed [not selected only over WiFi]")
                     }
@@ -266,12 +268,12 @@ class DownloadService : Service() {
                         val item = waitingQueuedItems[n]
                         if(item.wifiOnly){
                             if(networkStatusLive == NetworkConnectivity.Status.WIFI)
-                                downloadFileFromNetwork(item)
+                                downloadFileFromNetwork(this@DownloadService, item)
                             else
                                 logs(logTag, "start: new: Failed [selected only over WiFi and WiFi not available at this moment]")
                         } else {
                             if(networkStatusLive == NetworkConnectivity.Status.WIFI || networkStatusLive == NetworkConnectivity.Status.CELLULAR)
-                                downloadFileFromNetwork(item)
+                                downloadFileFromNetwork(this@DownloadService, item)
                             else
                                 logs(logTag, "start: new: Failed [both WiFi and Cellular not available at this moment]")
                         }
@@ -288,7 +290,7 @@ class DownloadService : Service() {
         downloadRepository.cancelDownload(downloadId)
     }
 
-    private fun downloadFileFromNetwork(downloadEntity: DownloadEntity) = coroutineScope.launch {
+    private fun downloadFileFromNetwork(appContext:Context, downloadEntity: DownloadEntity) = coroutineScope.launch {
         logs(logTag, "downloading... id => ${downloadEntity.id}")
 
         val fileCachePath = noBackupFilesDir?.path + "/downloads"
@@ -332,6 +334,14 @@ class DownloadService : Service() {
 
                     notificationManager?.showFileDownloadNotification(100, downloadId)
 
+                    val targetDocumentFileUri: Uri? = Uri.parse(downloadEntity.destinationUri)
+                    val targetDocumentFile:DocumentFile? = targetDocumentFileUri?.let { DocumentFile.fromTreeUri(appContext, it) }
+
+                    if(targetDocumentFile==null){
+                        logs(logTag, "onDownloadComplete: fail to open targetDocumentFile => ${downloadEntity.destinationUri}")
+                        return
+                    }
+
                     val contentFile = targetDocumentFile.createFile(downloadEntity.mimeType, downloadEntity.name)
                     if (contentFile != null && contentFile.exists()) {
 
@@ -339,16 +349,11 @@ class DownloadService : Service() {
                         logs(logTag, "onDownloadComplete: copied result => $fileCopied")
 
                         if (fileCopied) {
-                            val cacheFile = File(tmpPath)
-                            if (cacheFile.exists()) {
-                                cacheFile.delete()
-                            } else {
-                                logs(logTag, "onDownloadComplete: temp file not exists")
-                            }
+                            val tmpFile = File(tmpPath)
+                            if (tmpFile.exists())
+                                tmpFile.delete()
                         }
-                    } else {
-                        logs(logTag, "onDownloadComplete: output file not created")
-                    }
+                    } else logs(logTag, "onDownloadComplete: output file not created")
                 }
 
                 override fun onDownloadFailed(errorMessage: String, downloadId: Int) {

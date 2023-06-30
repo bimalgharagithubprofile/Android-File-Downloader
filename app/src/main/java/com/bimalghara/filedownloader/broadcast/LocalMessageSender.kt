@@ -12,7 +12,7 @@ class LocalMessageSender(private val mContext: Context?) {
         messageIntent = Intent("${mContext?.packageName}.NOTIFICATION_BROAD_CAST")
     }
 
-    fun sendMessage(action: String, downloadId: Int?) {
+    fun sendMessage(action: String, downloadId: Int? = null) {
 
         if (messageIntent != null && mContext != null) {
 

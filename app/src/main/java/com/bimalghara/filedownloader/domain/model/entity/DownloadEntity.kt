@@ -14,7 +14,7 @@ data class DownloadEntity(
 
     var url: String,
     var wifiOnly: Boolean = true,
-    var destinationFile: String,//path+filename.ext
+    var destinationUri: String,//string uri
 
     var name: String,//name + ext
     var mimeType: String,

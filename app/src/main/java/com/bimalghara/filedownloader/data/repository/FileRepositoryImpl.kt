@@ -2,9 +2,7 @@ package com.bimalghara.filedownloader.data.repository
 
 import android.content.Context
 import android.net.Uri
-import androidx.documentfile.provider.DocumentFile
 import com.bimalghara.filedownloader.R
-import com.bimalghara.filedownloader.broadcast.LocalMessageSender
 import com.bimalghara.filedownloader.common.dispatcher.DispatcherProviderSource
 import com.bimalghara.filedownloader.data.local.database.DownloadsDao
 import com.bimalghara.filedownloader.data.network.retrofit.ApiServiceGenerator
@@ -14,9 +12,8 @@ import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.domain.repository.FileRepositorySource
 import com.bimalghara.filedownloader.utils.DownloadStatus
 import com.bimalghara.filedownloader.utils.FileUtil.getMimeType
-import com.bimalghara.filedownloader.utils.FunUtil.connectDownloadService
 import com.bimalghara.filedownloader.utils.FunUtil.createFileDetailsFromHeaders
-import com.bimalghara.filedownloader.utils.Logger.logs
+import com.bimalghara.filedownloader.utils.FunUtil.wakeUpDownloadService
 import com.bimalghara.filedownloader.utils.ResourceWrapper
 import com.bimalghara.filedownloader.utils.getStringFromResource
 import kotlinx.coroutines.flow.Flow
@@ -49,20 +46,11 @@ class FileRepositoryImpl @Inject constructor(
                 return ResourceWrapper.Error(appContext.getStringFromResource(R.string.error_invalid_mime_type))
             }
 
-            val destinationFileRawName = "${fileDetails.fileName}.${fileDetails.fileExtension}"
-            val targetDocumentFile = DocumentFile.fromTreeUri(appContext, destinationUri)
-            logs(logTag, "save targetDocumentFile: ${targetDocumentFile?.uri?.path}")
-            val newDocumentFile = targetDocumentFile?.createFile(mimeType, destinationFileRawName)
-            logs(logTag, "saving mimeType: $mimeType | newDocumentFile: ${newDocumentFile?.uri?.path}")
-            if(newDocumentFile?.uri == null){
-                return ResourceWrapper.Error(appContext.getStringFromResource(R.string.error_failed_create_file))
-            }
-
             val data = DownloadEntity(
                 url = fileDetails.requestUrl,
                 wifiOnly = wifiOnly,
-                destinationFile = newDocumentFile.uri.toString(),
-                name = destinationFileRawName,//name + ext
+                destinationUri = destinationUri.toString(),
+                name = "${fileDetails.fileName}.${fileDetails.fileExtension}",//name + ext
                 mimeType = mimeType,
                 sizeTotal = fileDetails.contentLength ?: 0,//in bytes [total]
                 supportRange = !fileDetails.acceptRanges.isNullOrBlank(),
@@ -76,8 +64,7 @@ class FileRepositoryImpl @Inject constructor(
             }
 
             //start service
-            appContext.connectDownloadService()
-            LocalMessageSender(appContext).sendMessage(action = "POP_DOWNLOAD", downloadId = null)
+            wakeUpDownloadService(appContext, action = "DOWNLOAD_START")
 
             return ResourceWrapper.Success(data = true)
 

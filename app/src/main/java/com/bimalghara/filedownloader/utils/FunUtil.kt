@@ -1,15 +1,13 @@
 package com.bimalghara.filedownloader.utils
 
-import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import androidx.core.content.ContextCompat.startForegroundService
+import com.bimalghara.filedownloader.broadcast.LocalMessageSender
 import com.bimalghara.filedownloader.domain.model.FileDetails
 import com.bimalghara.filedownloader.service.DownloadService
-import kotlinx.coroutines.async
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 import okhttp3.Headers
 import java.net.URL
 import java.text.DecimalFormat
@@ -81,7 +79,14 @@ object FunUtil {
         return (currentFileSize * 100 / totalFileSize).toInt()
     }
 
-    fun Context.connectDownloadService(){
+    suspend fun wakeUpDownloadService(appContext: Context, action: String) {
+        appContext.connectDownloadService()
+        delay(2000)
+        LocalMessageSender(appContext).sendMessage(action = action)
+
+    }
+
+    private fun Context.connectDownloadService(){
         if(!isServiceRunning(this, DownloadService::class.java)) {
             val serviceIntent = Intent(this, DownloadService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
