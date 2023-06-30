@@ -2,7 +2,6 @@ package com.bimalghara.filedownloader.data.repository
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.documentfile.provider.DocumentFile
 import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.broadcast.LocalMessageSender
@@ -17,6 +16,7 @@ import com.bimalghara.filedownloader.utils.DownloadStatus
 import com.bimalghara.filedownloader.utils.FileUtil.getMimeType
 import com.bimalghara.filedownloader.utils.FunUtil.connectDownloadService
 import com.bimalghara.filedownloader.utils.FunUtil.createFileDetailsFromHeaders
+import com.bimalghara.filedownloader.utils.Logger.logs
 import com.bimalghara.filedownloader.utils.ResourceWrapper
 import com.bimalghara.filedownloader.utils.getStringFromResource
 import kotlinx.coroutines.flow.Flow
@@ -51,9 +51,9 @@ class FileRepositoryImpl @Inject constructor(
 
             val destinationFileRawName = "${fileDetails.fileName}.${fileDetails.fileExtension}"
             val targetDocumentFile = DocumentFile.fromTreeUri(appContext, destinationUri)
-            Log.e(logTag, "save targetDocumentFile: ${targetDocumentFile?.uri?.path}")
+            logs(logTag, "save targetDocumentFile: ${targetDocumentFile?.uri?.path}")
             val newDocumentFile = targetDocumentFile?.createFile(mimeType, destinationFileRawName)
-            Log.e(logTag, "saving mimeType: $mimeType | newDocumentFile: ${newDocumentFile?.uri?.path}")
+            logs(logTag, "saving mimeType: $mimeType | newDocumentFile: ${newDocumentFile?.uri?.path}")
             if(newDocumentFile?.uri == null){
                 return ResourceWrapper.Error(appContext.getStringFromResource(R.string.error_failed_create_file))
             }

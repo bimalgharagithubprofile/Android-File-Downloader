@@ -1,9 +1,12 @@
 package com.bimalghara.filedownloader.data.di
 
 import android.app.Application
+import android.content.Context
 import androidx.room.Room
 import com.bimalghara.filedownloader.common.dispatcher.DispatcherProviderSource
 import com.bimalghara.filedownloader.data.local.database.AppDatabase
+import com.bimalghara.filedownloader.data.local.preferences.DataStoreImpl
+import com.bimalghara.filedownloader.data.local.preferences.DataStoreSource
 import com.bimalghara.filedownloader.data.network.retrofit.ApiServiceGenerator
 import com.bimalghara.filedownloader.data.repository.DownloadRepositoryImpl
 import com.bimalghara.filedownloader.data.repository.FileRepositoryImpl
@@ -11,6 +14,7 @@ import com.bimalghara.filedownloader.domain.repository.FileRepositorySource
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -22,6 +26,12 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 @Module
 class DataModuleDataSources {
+
+    @Provides
+    @Singleton
+    fun providePreferenceDataStore(@ApplicationContext appContext: Context): DataStoreSource {
+        return DataStoreImpl(appContext)
+    }
 
     @Provides
     @Singleton

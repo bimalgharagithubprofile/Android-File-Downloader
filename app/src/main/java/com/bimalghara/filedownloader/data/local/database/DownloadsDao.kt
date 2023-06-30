@@ -21,7 +21,7 @@ interface DownloadsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun addDownload(item: DownloadEntity): Long
 
-    @Query("SELECT * FROM DownloadEntity where downloadStatus = 'WAITING' OR downloadStatus = 'DOWNLOADING' OR downloadStatus = 'PAUSED'")
+    @Query("SELECT * FROM DownloadEntity where downloadStatus = 'WAITING' OR downloadStatus = 'DOWNLOADING' OR downloadStatus = 'PAUSED' ORDER BY updatedAt DESC")
     suspend fun getOpenQueuedList(): List<DownloadEntity>
 
 

@@ -10,19 +10,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.common.dispatcher.DispatcherProviderSource
+import com.bimalghara.filedownloader.data.local.preferences.DataStoreSource
 import com.bimalghara.filedownloader.domain.model.FileDetails
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.domain.repository.FileRepositorySource
+import com.bimalghara.filedownloader.utils.*
 import com.bimalghara.filedownloader.utils.FunUtil.convertTimestampToLocalDate
-import com.bimalghara.filedownloader.utils.NetworkConnectivity
-import com.bimalghara.filedownloader.utils.ResourceWrapper
-import com.bimalghara.filedownloader.utils.SingleEvent
-import com.bimalghara.filedownloader.utils.getStringFromResource
+import com.bimalghara.filedownloader.utils.Logger.logs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
@@ -32,6 +32,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val dispatcherProviderSource: DispatcherProviderSource,
+    private val dataStore: DataStoreSource,
     private val networkConnectivity: NetworkConnectivity,
     private val fileRepositorySource: FileRepositorySource,
 ) : ViewModel() {
@@ -52,6 +53,22 @@ class MainViewModel @Inject constructor(
     private var _fileDetailsJob: Job? = null
     private val _fileDetailsLiveData = MutableLiveData<ResourceWrapper<FileDetails>>()
     val fileDetailsLiveData: LiveData<ResourceWrapper<FileDetails>> get() = _fileDetailsLiveData
+
+
+    init {
+        viewModelScope.launch(dispatcherProviderSource.io) {
+            val downloadLimit = getSettingParallelDownload()
+            if(downloadLimit.isNullOrBlank())
+                dataStore.saveString(DS_KEY_SETTING_PARALLEL_DOWNLOAD, DEFAULT_PARALLEL_DOWNLOAD_LIMIT)
+        }
+    }
+
+    suspend fun getSettingParallelDownload():String? = withContext(dispatcherProviderSource.io){
+        return@withContext dataStore.getString(DS_KEY_SETTING_PARALLEL_DOWNLOAD)
+    }
+    fun updateSettingParallelDownload(value: Float) = viewModelScope.launch(dispatcherProviderSource.io) {
+        dataStore.saveString(DS_KEY_SETTING_PARALLEL_DOWNLOAD, value.toInt().toString())
+    }
 
     fun setSelectedPath(documentFile: DocumentFile?) {
         _selectedPathLiveData.value = documentFile
@@ -77,9 +94,9 @@ class MainViewModel @Inject constructor(
                         convertTimestampToLocalDate(record.updatedAt)
                     }
                     for ((date, records) in groupedRecords) {
-                        Log.e(logTag, "Date: $date")
+                        logs(logTag, "Date: $date")
                         for (record in records) {
-                            Log.e(logTag,"Record: ${record.name}")
+                            logs(logTag,"Record: ${record.name}")
                         }
                     }
                 }
@@ -134,7 +151,7 @@ class MainViewModel @Inject constructor(
 
     private suspend fun getNetworkStatus(): NetworkConnectivity.Status {
         val result = networkConnectivity.getStatus(dispatcherProviderSource.io)
-        Log.i(logTag, "network status: $result")
+        logs(logTag, "network status: $result")
         return result
     }
 
@@ -142,5 +159,7 @@ class MainViewModel @Inject constructor(
         _fileDetailsLiveData.value = ResourceWrapper.None()
         _enqueueLiveData.value = ResourceWrapper.None()
     }
+
+
 
 }

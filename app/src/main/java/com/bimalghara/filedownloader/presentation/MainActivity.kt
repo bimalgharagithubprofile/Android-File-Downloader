@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.widget.PopupMenu
 import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.lifecycleScope
 import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.databinding.ActivityMainBinding
 import com.bimalghara.filedownloader.domain.model.FileDetails
@@ -18,11 +19,13 @@ import com.bimalghara.filedownloader.presentation.base.BaseActivity
 import com.bimalghara.filedownloader.utils.*
 import com.bimalghara.filedownloader.utils.FileUtil.protectedDirectories
 import com.bimalghara.filedownloader.utils.FunUtil.toMegabytes
+import com.bimalghara.filedownloader.utils.Logger.logs
 import com.bimalghara.filedownloader.utils.permissions.PermissionManager
 import com.bimalghara.filedownloader.utils.permissions.Permissions
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 
 /**
@@ -46,12 +49,12 @@ class MainActivity : BaseActivity() {
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 val treeUri = result.data?.data
-                Log.e(TAG, "selected treeUri: ${treeUri.toString()}")
+                logs(TAG, "selected treeUri: ${treeUri.toString()}")
                 if (treeUri != null) {
                     val treeDocument: DocumentFile? = DocumentFile.fromTreeUri(this, treeUri)
-                    Log.e(TAG, "selected treeDocument: ${treeDocument?.uri?.path}")
+                    logs(TAG, "selected treeDocument: ${treeDocument?.uri?.path}")
                     if(treeDocument != null){
-                        Log.e(TAG, "selected treeDocument canWrite: ${treeDocument.canWrite()}")
+                        logs(TAG, "selected treeDocument canWrite: ${treeDocument.canWrite()}")
                         if(treeDocument.canWrite()){
                             viewModel.setSelectedPath(treeDocument)
                         } else viewModel._errorSingleEvent.value = SingleEvent(getStringFromResource(R.string.error_write_permission))
@@ -68,8 +71,6 @@ class MainActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-
 
         popupMenu()
 
@@ -104,10 +105,10 @@ class MainActivity : BaseActivity() {
                     .rationale("We need all Permissions to save file")
                     .checkPermission { granted ->
                         if (granted) {
-                            Log.e(TAG, "runtime permissions allowed")
+                            logs(TAG, "runtime permissions allowed")
                             startActivityDirectoryPickUp()
                         } else {
-                            Log.e(TAG, "runtime permissions denied")
+                            logs(TAG, "runtime permissions denied")
                             viewModel._errorSingleEvent.value = SingleEvent(getStringFromResource(R.string.error_no_permission))
                         }
                     }
@@ -118,8 +119,6 @@ class MainActivity : BaseActivity() {
             setAddNew()
             bottomSheetAddNew?.state = BottomSheetBehavior.STATE_EXPANDED
         }
-
-        handleBottomSheetSettings()
     }
 
     private fun startActivityDirectoryPickUp() {
@@ -131,7 +130,7 @@ class MainActivity : BaseActivity() {
         observeError(binding.root, viewModel.errorSingleEvent)
 
         observe(viewModel.selectedPathLiveData) {
-            Log.d(TAG, "observe selectedPathLiveData | $it")
+            logs(TAG, "observe selectedPathLiveData | $it")
             if(it?.uri?.path != null) {
                 val folder = it.uri.path!!.split("/").last()
                 if (protectedDirectories.contains(folder)) {
@@ -145,7 +144,7 @@ class MainActivity : BaseActivity() {
         }
 
         observe(viewModel.fileDetailsLiveData) {
-            Log.d(TAG, "observe fileDetailsLiveData | $it")
+            logs(TAG, "observe fileDetailsLiveData | $it")
             when (it) {
                 is ResourceWrapper.Loading -> {
                     setGrabbingInfo()
@@ -160,7 +159,7 @@ class MainActivity : BaseActivity() {
         }
 
         observe(viewModel.enqueueLiveData) {
-            Log.d(TAG, "observe enqueueLiveData | $it")
+            logs(TAG, "observe enqueueLiveData | $it")
             when (it) {
                 is ResourceWrapper.Success -> {
                     setSuccess()
@@ -185,6 +184,7 @@ class MainActivity : BaseActivity() {
                     true
                 }
                 R.id.action_settings -> {
+                    setBottomSheetSettings()
                     bottomSheetSettings?.state = BottomSheetBehavior.STATE_EXPANDED
                     true
                 }
@@ -207,14 +207,14 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    private fun handleBottomSheetSettings() {
+    private fun setBottomSheetSettings() = lifecycleScope.launch {
         binding.settingsSheet.seekBar.setCustomThumbDrawable(R.drawable.thumb)
-        binding.settingsSheet.seekBar.value = (3).toFloat()
-        binding.settingsSheet.seekBar.addOnChangeListener { slider, value, fromUser ->
-            Log.e(TAG, "seekbar value:${value.toInt()}")
-        }
+        val getSetting = viewModel.getSettingParallelDownload()
+        val downloadLimit = getSetting?.toFloat() ?: DEFAULT_PARALLEL_DOWNLOAD_LIMIT.toFloat()
+        binding.settingsSheet.seekBar.value = downloadLimit
 
         binding.settingsSheet.btnUpdate.setOnClickListener {
+            viewModel.updateSettingParallelDownload(binding.settingsSheet.seekBar.value)
             bottomSheetSettings?.state = BottomSheetBehavior.STATE_HIDDEN
         }
         binding.settingsSheet.btnClose.setOnClickListener {

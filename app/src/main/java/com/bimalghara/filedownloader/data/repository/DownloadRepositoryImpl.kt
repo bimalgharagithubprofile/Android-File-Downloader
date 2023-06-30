@@ -3,7 +3,6 @@ package com.bimalghara.filedownloader.data.repository
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import com.bimalghara.filedownloader.common.dispatcher.DispatcherProviderSource
 import com.bimalghara.filedownloader.data.local.database.DownloadsDao
 import com.bimalghara.filedownloader.data.network.DownloadCallback
@@ -12,6 +11,7 @@ import com.bimalghara.filedownloader.data.network.retrofit.service.ApiServiceDow
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.utils.FunUtil.fetchProgress
 import com.bimalghara.filedownloader.utils.FunUtil.toMegabytes
+import com.bimalghara.filedownloader.utils.Logger.logs
 import kotlinx.coroutines.*
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -50,8 +50,8 @@ class DownloadRepositoryImpl @Inject constructor(
 
         cancellationFlags[downloadEntity.id] = AtomicBoolean(false)
 
-        Log.w(logTag, "downloadFile: ${downloadEntity.id}" )
-        Log.w(logTag, "downloadFile: ${cancellationFlags[downloadEntity.id]}" )
+        logs(logTag, "downloadFile: ${downloadEntity.id}" )
+        logs(logTag, "downloadFile: ${cancellationFlags[downloadEntity.id]}" )
 
         val downloadJob = coroutineScope.launch {
 
@@ -105,7 +105,7 @@ class DownloadRepositoryImpl @Inject constructor(
 
     fun cancelDownload(downloadId: Int?) {
 
-        Log.w(logTag, "cancelDownload: $downloadId" )
+        logs(logTag, "cancelDownload: $downloadId" )
 
         if (downloadId == null){
             //cancel all
@@ -114,9 +114,9 @@ class DownloadRepositoryImpl @Inject constructor(
             val downloadCall = downloadCalls[downloadId]
             val downloadJob = downloadJobs[downloadId]
 
-            Log.w(logTag, "cancellationFlag: $cancellationFlag" )
-            Log.w(logTag, "downloadCall: $downloadCall" )
-            Log.w(logTag, "downloadJob: $downloadJob" )
+            logs(logTag, "cancellationFlag: $cancellationFlag" )
+            logs(logTag, "downloadCall: $downloadCall" )
+            logs(logTag, "downloadJob: $downloadJob" )
 
 
 
