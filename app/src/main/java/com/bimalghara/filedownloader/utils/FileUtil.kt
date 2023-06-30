@@ -1,7 +1,11 @@
 package com.bimalghara.filedownloader.utils
 
+import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.webkit.MimeTypeMap
+import java.io.*
 
 
 object FileUtil {
@@ -48,6 +52,40 @@ object FileUtil {
                     Environment.DIRECTORY_RECORDINGS
                 )
             )
+        }
+    }
+
+    fun getMimeType(ext: String): String? {
+        // "audio/$ext"
+
+        val mimeTypeMap = MimeTypeMap.getSingleton()
+        return mimeTypeMap.getMimeTypeFromExtension(ext)
+    }
+
+    fun copyFileToUri(context: Context, sourceFilePath: String, destinationUri: Uri): Boolean {
+        val inputStream: InputStream
+        val outputStream: OutputStream
+
+        try {
+            inputStream = FileInputStream(File(sourceFilePath))
+            outputStream = context.contentResolver.openOutputStream(destinationUri) ?: return false
+
+            // Copy the data
+            val buffer = ByteArray(4096)
+            var bytesRead: Int
+            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                outputStream.write(buffer, 0, bytesRead)
+            }
+
+            // Close the streams
+            inputStream.close()
+            outputStream.close()
+
+            return true
+        }
+        catch (e: IOException) {
+            e.printStackTrace()
+            return false
         }
     }
 

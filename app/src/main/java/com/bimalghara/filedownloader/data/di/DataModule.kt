@@ -4,10 +4,10 @@ import android.app.Application
 import androidx.room.Room
 import com.bimalghara.filedownloader.common.dispatcher.DispatcherProviderSource
 import com.bimalghara.filedownloader.data.local.database.AppDatabase
-import com.bimalghara.filedownloader.data.local.database.DownloadsDao
 import com.bimalghara.filedownloader.data.network.retrofit.ApiServiceGenerator
-import com.bimalghara.filedownloader.data.repository.DownloaderRepositoryImpl
-import com.bimalghara.filedownloader.domain.repository.DownloaderRepositorySource
+import com.bimalghara.filedownloader.data.repository.DownloadRepositoryImpl
+import com.bimalghara.filedownloader.data.repository.FileRepositoryImpl
+import com.bimalghara.filedownloader.domain.repository.FileRepositorySource
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -35,12 +35,26 @@ class DataModuleDataSources {
 
     @Provides
     @Singleton
+    fun provideFileRepository(
+        dispatcherProviderSource: DispatcherProviderSource,
+        serviceGenerator: ApiServiceGenerator,
+        db: AppDatabase
+    ): FileRepositorySource {
+        return FileRepositoryImpl(
+            dispatcherProviderSource = dispatcherProviderSource,
+            serviceGenerator = serviceGenerator,
+            downloadsDao = db.downloadsDao
+        )
+    }
+
+    @Provides
+    @Singleton
     fun provideDownloaderRepository(
         dispatcherProviderSource: DispatcherProviderSource,
         serviceGenerator: ApiServiceGenerator,
         db: AppDatabase
-    ): DownloaderRepositorySource {
-        return DownloaderRepositoryImpl(
+    ): DownloadRepositoryImpl {
+        return DownloadRepositoryImpl(
             dispatcherProviderSource = dispatcherProviderSource,
             serviceGenerator = serviceGenerator,
             downloadsDao = db.downloadsDao

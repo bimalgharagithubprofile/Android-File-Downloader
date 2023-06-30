@@ -1,6 +1,15 @@
 package com.bimalghara.filedownloader.utils
 
+import android.app.Activity
+import android.app.ActivityManager
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import androidx.core.content.ContextCompat.startForegroundService
 import com.bimalghara.filedownloader.domain.model.FileDetails
+import com.bimalghara.filedownloader.service.DownloadService
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 import okhttp3.Headers
 import java.net.URL
 import java.text.DecimalFormat
@@ -66,5 +75,32 @@ object FunUtil {
 
         val decimalFormat = DecimalFormat("#.#")
         return decimalFormat.format(result) + " MB"
+    }
+
+    fun fetchProgress(currentFileSize: Long, totalFileSize: Long): Int {
+        return (currentFileSize * 100 / totalFileSize).toInt()
+    }
+
+    fun Context.connectDownloadService(){
+        if(!isServiceRunning(this, DownloadService::class.java)) {
+            val serviceIntent = Intent(this, DownloadService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent)
+            } else {
+                startService(serviceIntent)
+            }
+        }
+    }
+
+    private fun isServiceRunning(context: Context, serviceClass: Class<*>): Boolean {
+        val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val runningProcesses = manager.runningAppProcesses
+        for (processInfo in runningProcesses) {
+            val serviceName = processInfo.processName
+            if (serviceName == serviceClass.name) {
+                return true
+            }
+        }
+        return false
     }
 }

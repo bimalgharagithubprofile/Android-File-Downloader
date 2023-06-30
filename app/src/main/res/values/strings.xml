@@ -21,7 +21,9 @@
     <string name="error_invalid_destination_path">Destination folder is wrong!</string>
     <string name="error_invalid_name">Bad fIle name!</string>
     <string name="error_invalid_extension">Bad fIle extension!</string>
+    <string name="error_invalid_mime_type">Bad MIME Type!</string>
     <string name="error_failed_to_queue">Failed to add!</string>
+    <string name="error_failed_create_file">File not created in selected folder</string>
 
 
     <string name="add">Add</string>
@@ -44,5 +46,6 @@
     <string name="something_went_wrong">Something went wrong</string>
     <string name="back">Back</string>
     <string name="waiting_in_queue">Waiting in queue</string>
+    <string name="pause">Pause</string>
 
 </resources>

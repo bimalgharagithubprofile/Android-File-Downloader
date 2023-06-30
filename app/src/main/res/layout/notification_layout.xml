@@ -1,0 +1,52 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16sp">
+
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="false"
+        android:indeterminateTint="@android:color/holo_red_dark"
+        android:max="100"
+        android:progress="0"
+        android:visibility="visible" />
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20sp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/pause_button"
+            android:layout_width="0sp"
+            android:layout_weight="1"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_title"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:layout_height="40sp"
+            android:layout_marginStart="10sp"
+            android:text="@string/pause" />
+
+        <Button
+            android:id="@+id/cancel_button"
+            android:layout_width="0sp"
+            android:layout_weight="1"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_height="40sp"
+            android:textColor="@color/text_title"
+            android:layout_marginEnd="10sp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:text="@string/cancel" />
+
+
+
+    </LinearLayout>
+
+</FrameLayout>

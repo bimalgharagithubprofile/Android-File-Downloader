@@ -4,7 +4,7 @@ import android.content.Context
 import com.bimalghara.filedownloader.common.dispatcher.DefaultDispatcherProvider
 import com.bimalghara.filedownloader.common.dispatcher.DispatcherProviderSource
 import com.bimalghara.filedownloader.utils.NetworkConnectivityImpl
-import com.bimalghara.filedownloader.utils.NetworkConnectivitySource
+import com.bimalghara.filedownloader.utils.NetworkConnectivity
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,7 +28,7 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideNetworkConnectivity(@ApplicationContext context: Context): NetworkConnectivitySource {
+    fun provideNetworkConnectivity(@ApplicationContext context: Context): NetworkConnectivity {
         return NetworkConnectivityImpl(context)
     }
 }

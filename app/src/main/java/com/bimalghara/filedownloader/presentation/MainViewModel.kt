@@ -12,9 +12,9 @@ import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.common.dispatcher.DispatcherProviderSource
 import com.bimalghara.filedownloader.domain.model.FileDetails
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
-import com.bimalghara.filedownloader.domain.repository.DownloaderRepositorySource
+import com.bimalghara.filedownloader.domain.repository.FileRepositorySource
 import com.bimalghara.filedownloader.utils.FunUtil.convertTimestampToLocalDate
-import com.bimalghara.filedownloader.utils.NetworkConnectivitySource
+import com.bimalghara.filedownloader.utils.NetworkConnectivity
 import com.bimalghara.filedownloader.utils.ResourceWrapper
 import com.bimalghara.filedownloader.utils.SingleEvent
 import com.bimalghara.filedownloader.utils.getStringFromResource
@@ -32,8 +32,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val dispatcherProviderSource: DispatcherProviderSource,
-    private val networkConnectivitySource: NetworkConnectivitySource,
-    private val downloaderRepositorySource: DownloaderRepositorySource,
+    private val networkConnectivity: NetworkConnectivity,
+    private val fileRepositorySource: FileRepositorySource,
 ) : ViewModel() {
     private val logTag = javaClass.simpleName
 
@@ -59,7 +59,7 @@ class MainViewModel @Inject constructor(
 
     private fun getUsersDataFromCached(context: Context) = viewModelScope.launch {
         _downloadsLiveData.value = ResourceWrapper.Loading()
-        downloaderRepositorySource.requestDownloadsFromLocal().onEach { newList ->
+        fileRepositorySource.requestDownloadsFromLocal().onEach { newList ->
             if (newList.isNotEmpty()) {
                 val completeList: MutableList<DownloadEntity> = arrayListOf()
                 if (_downloadsLiveData.value?.data != null) {
@@ -71,7 +71,7 @@ class MainViewModel @Inject constructor(
                 }
 
                 if (completeList.isEmpty()) {
-                    _downloadsLiveData.value = ResourceWrapper.Error(context.getStringFromResource(R.string.no_downloads))
+                    _downloadsLiveData.postValue(ResourceWrapper.Error(context.getStringFromResource(R.string.no_downloads)))
                 } else {
                     val groupedRecords = completeList.groupBy { record ->
                         convertTimestampToLocalDate(record.updatedAt)
@@ -83,16 +83,15 @@ class MainViewModel @Inject constructor(
                         }
                     }
                 }
-            } else _downloadsLiveData.value = ResourceWrapper.Error(context.getStringFromResource(R.string.no_downloads))
+            } else _downloadsLiveData.postValue(ResourceWrapper.Error(context.getStringFromResource(R.string.no_downloads)))
         }.launchIn(viewModelScope)
     }
-
 
     fun getFileDetails(context: Context, url: Editable?) = viewModelScope.launch {
         val networkStatus = async { getNetworkStatus() }.await()
 
-        if (networkStatus != NetworkConnectivitySource.Status.Available) {
-            _errorSingleEvent.value = SingleEvent(context.getStringFromResource(R.string.no_internet))
+        if (networkStatus != NetworkConnectivity.Status.Available) {
+            _errorSingleEvent.postValue(SingleEvent(context.getStringFromResource(R.string.no_internet)))
         } else {
             requestFileDetailsFromCloud(context, url)
         }
@@ -103,7 +102,7 @@ class MainViewModel @Inject constructor(
         } else {
 
             _fileDetailsJob?.cancel()//to prevent creating duplicate flow, fun is called multiple times
-            _fileDetailsJob = downloaderRepositorySource.requestFileDetailsFromNetwork(context, url.toString()).onEach {
+            _fileDetailsJob = fileRepositorySource.requestFileDetailsFromNetwork(context, url.toString()).onEach {
                 _fileDetailsLiveData.value = it
                 when (it) {
                     is ResourceWrapper.Error -> _errorSingleEvent.value = SingleEvent(it.error!!)
@@ -116,31 +115,30 @@ class MainViewModel @Inject constructor(
 
     fun addIntoQueue(context: Context, newName: Editable?, wifiOnly: Boolean) = viewModelScope.launch(dispatcherProviderSource.io) {
         if(newName.isNullOrEmpty()) {
-            _errorSingleEvent.value = SingleEvent(context.getStringFromResource(R.string.error_invalid_name))
+            _errorSingleEvent.postValue(SingleEvent(context.getStringFromResource(R.string.error_invalid_name)))
         } else if(_fileDetailsLiveData.value?.data?.fileExtension.isNullOrEmpty()) {
-            _errorSingleEvent.value = SingleEvent(context.getStringFromResource(R.string.error_invalid_extension))
+            _errorSingleEvent.postValue(SingleEvent(context.getStringFromResource(R.string.error_invalid_extension)))
         } else if(_selectedPathLiveData.value?.uri?.path.isNullOrEmpty()) {
-            _errorSingleEvent.value = SingleEvent(context.getStringFromResource(R.string.error_invalid_destination_path))
+            _errorSingleEvent.postValue(SingleEvent(context.getStringFromResource(R.string.error_invalid_destination_path)))
         } else {
 
             val newFIleDetails = _fileDetailsLiveData.value!!.data!!.also {
                 it.fileName = newName.toString()
             }
 
-            val response = downloaderRepositorySource.addQueue(context, wifiOnly, newFIleDetails, _selectedPathLiveData.value!!.uri.path!!)
-            _enqueueLiveData.value = response
+            val response = fileRepositorySource.addQueue(context, wifiOnly, newFIleDetails, _selectedPathLiveData.value!!.uri)
+            _enqueueLiveData.postValue(response)
         }
     }
 
 
-    private suspend fun getNetworkStatus(): NetworkConnectivitySource.Status {
-        val result = networkConnectivitySource.getStatus(dispatcherProviderSource.io)
+    private suspend fun getNetworkStatus(): NetworkConnectivity.Status {
+        val result = networkConnectivity.getStatus(dispatcherProviderSource.io)
         Log.i(logTag, "network status: $result")
         return result
     }
 
     fun clearSession() {
-        _selectedPathLiveData.value = null
         _fileDetailsLiveData.value = ResourceWrapper.None()
         _enqueueLiveData.value = ResourceWrapper.None()
     }
