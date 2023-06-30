@@ -19,8 +19,12 @@ interface ApiServiceDownload {
     @Streaming
     fun downloadFile(@Url url: String): Call<ResponseBody>
 
+    /*@GET
+    @Streaming
+    fun downloadFileRange(@Url fileUrl: String, @Header("Range") range: String): Call<ResponseBody>*/
+
     @GET
     @Streaming
-    fun downloadFileRange(@Url fileUrl: String, @Header("Range") range: String): Call<ResponseBody>
+    fun downloadFileRange(@Url fileUrl: String, @Header("Range") range: String, @Header("Connection") connection: String = "close"): Call<ResponseBody>
 
 }

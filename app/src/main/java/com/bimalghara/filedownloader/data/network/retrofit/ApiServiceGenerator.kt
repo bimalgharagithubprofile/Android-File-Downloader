@@ -12,8 +12,8 @@ import javax.inject.Singleton
  * Created by BimalGhara
  */
 
-private const val timeoutRead = 30   //In seconds
-private const val timeoutConnect = 30   //In seconds
+private const val timeoutRead = 180000   //In seconds (3min)
+private const val timeoutConnect = 180000   //In seconds (3min)
 
 @Singleton
 class ApiServiceGenerator @Inject constructor() {

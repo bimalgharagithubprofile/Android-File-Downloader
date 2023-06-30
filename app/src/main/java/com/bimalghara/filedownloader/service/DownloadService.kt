@@ -334,7 +334,7 @@ class DownloadService : Service() {
                 }
 
                 override fun onDownloadComplete(tmpPath: String, downloadId: Int) {
-                    logs(logTag, "onDownloadComplete: $tmpPath, downloadId => $downloadId")
+                    logs(logTag, "onDownloadComplete: downloadId => $downloadId | tmpPath=>$tmpPath")
 
                     notificationManager?.showFileDownloadNotification(100, downloadId)
 
