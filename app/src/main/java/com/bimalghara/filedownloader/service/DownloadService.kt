@@ -42,7 +42,7 @@ class DownloadService : Service() {
 
     private var notificationManager: AppNotificationManager? = null
 
-    private var tempFilePath: String? = null
+    private var fileCacheDir:File?=null
 
     private val openQueuedList:MutableList<DownloadEntity> = arrayListOf()
 
@@ -71,15 +71,7 @@ class DownloadService : Service() {
                     "DOWNLOAD_CANCEL" -> {
                         val downloadId = intent.getIntExtra("DOWNLOAD_ID", -1)
                         if (downloadId != -1) {
-                            actionPause(downloadId)
-
-                            //delete the temp file so that the process starts from beginning
-                            if (tempFilePath != null) {
-                                val tempFile = File(tempFilePath!!)
-                                if (tempFile.exists()) {
-                                    tempFile.delete()
-                                }
-                            }
+                            actionCancel(downloadId)
                         } else logs(logTag, "onReceive: DOWNLOAD_PAUSE => DOWNLOAD_ID INVALID")
                     }
                     /*"STOP_ALL" -> {
@@ -120,6 +112,8 @@ class DownloadService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+
+        fileCacheDir = File(noBackupFilesDir?.path + "/downloads")
 
         notificationManager = AppNotificationManager(this)
 
@@ -286,33 +280,43 @@ class DownloadService : Service() {
         }
     }
 
-    private fun actionPause(downloadId: Int?) = coroutineScope.launch {
+    private fun actionPause(downloadId: Int) = coroutineScope.launch {
+        downloadRepository.pauseDownload(downloadId)
+    }
+    private fun actionCancel(downloadId: Int) = coroutineScope.launch {
         downloadRepository.cancelDownload(downloadId)
     }
 
     private fun downloadFileFromNetwork(appContext:Context, downloadEntity: DownloadEntity) = coroutineScope.launch {
         logs(logTag, "downloading... id => ${downloadEntity.id}")
 
-        val fileCachePath = noBackupFilesDir?.path + "/downloads"
-        val fileCacheDir = File(fileCachePath)
-        if (!fileCacheDir.exists()){
-            fileCacheDir.mkdir()
+        if(fileCacheDir == null) {
+            logs(logTag, "downloading terminated [cache dir not found] id => ${downloadEntity.id}")
+            return@launch
         }
 
-        tempFilePath = fileCacheDir.path + "/" + downloadEntity.id + "_" + downloadEntity.name
-        val file = File(tempFilePath!!)
+        if (!fileCacheDir!!.exists()){
+            fileCacheDir!!.mkdir()
+        }
+
+        val tempFilePath = fileCacheDir!!.path + "/" + downloadEntity.id + "_" + downloadEntity.name
+        val file = File(tempFilePath)
         var fileCreated = file.exists()
         if (!fileCreated){
             fileCreated =  file.createNewFile()
         }
 
         if (fileCreated){
-            downloadRepository.downloadFile(baseContext, downloadEntity, tempFilePath!!,  object : DownloadCallback {
+            downloadRepository.downloadFile(baseContext, downloadEntity, tempFilePath,  object : DownloadCallback {
 
                 override fun onDownloadStarted(initialProgress: Int, downloadId: Int) {
                     logs(logTag, "onDownloadStarted() => progress => $initialProgress, downloadId => $downloadId")
 
                     notificationManager?.showFileDownloadNotification(initialProgress, downloadId)
+                }
+
+                override fun onDownloadPaused(downloadId: Int) {
+                    logs(logTag, "onDownloadPaused() => downloadId => $downloadId")
                 }
 
                 override fun onDownloadCancelled(downloadId: Int) {
@@ -350,8 +354,7 @@ class DownloadService : Service() {
 
                         if (fileCopied) {
                             val tmpFile = File(tmpPath)
-                            if (tmpFile.exists())
-                                tmpFile.delete()
+                            if (tmpFile.exists()) tmpFile.delete()
                         }
                     } else logs(logTag, "onDownloadComplete: output file not created")
                 }
