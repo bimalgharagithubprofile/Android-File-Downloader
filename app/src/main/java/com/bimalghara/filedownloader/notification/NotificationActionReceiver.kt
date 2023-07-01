@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.bimalghara.filedownloader.broadcast.LocalMessageSender
 import com.bimalghara.filedownloader.utils.Logger.logs
+import com.bimalghara.filedownloader.utils.NotificationAction
 
 class NotificationActionReceiver : BroadcastReceiver() {
 
@@ -14,9 +15,9 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
         if (intent != null) {
 
-            if (intent.action == "DOWNLOAD_PAUSE"
-                || intent.action == "DOWNLOAD_CANCEL"
-                || intent.action == "DOWNLOAD_RESUME"
+            if (intent.action == NotificationAction.DOWNLOAD_PAUSE.name
+                || intent.action == NotificationAction.DOWNLOAD_CANCEL.name
+                || intent.action == NotificationAction.DOWNLOAD_RESUME.name
             ) {
 
                 val downloadId = intent.getIntExtra("DOWNLOAD_ID", -1)

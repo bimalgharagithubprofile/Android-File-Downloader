@@ -57,21 +57,21 @@ class DownloadService : Service() {
                         logs(logTag, "DOWNLOAD_START")
                         actionDownload(PopType.START.name)
                     }
-                    "DOWNLOAD_RESUME" -> {
+                    NotificationAction.DOWNLOAD_RESUME.name -> {
                         logs(logTag, "DOWNLOAD_RESUME")
                         val downloadId = intent.getIntExtra("DOWNLOAD_ID", -1)
                         if (downloadId != -1) {
                             actionResume(downloadId)
                         }
                     }
-                    "DOWNLOAD_PAUSE" -> {
+                    NotificationAction.DOWNLOAD_PAUSE.name -> {
                         logs(logTag, "DOWNLOAD_PAUSE")
                         val downloadId = intent.getIntExtra("DOWNLOAD_ID", -1)
                         if (downloadId != -1) {
                             actionPause(downloadId)
                         } else logs(logTag, "onReceive: DOWNLOAD_PAUSE => DOWNLOAD_ID INVALID")
                     }
-                    "DOWNLOAD_CANCEL" -> {
+                    NotificationAction.DOWNLOAD_CANCEL.name -> {
                         val downloadId = intent.getIntExtra("DOWNLOAD_ID", -1)
                         if (downloadId != -1) {
                             actionCancel(downloadId)

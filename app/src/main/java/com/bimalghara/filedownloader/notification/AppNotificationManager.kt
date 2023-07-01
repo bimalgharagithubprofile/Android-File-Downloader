@@ -13,6 +13,7 @@ import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.bimalghara.filedownloader.R
+import com.bimalghara.filedownloader.utils.NotificationAction
 import com.bimalghara.filedownloader.utils.NotificationStatus
 
 class AppNotificationManager(private val context: Context) {
@@ -54,17 +55,17 @@ class AppNotificationManager(private val context: Context) {
 
         notificationLayout.setOnClickPendingIntent(
             R.id.resume_button,
-            getPendingIntent("DOWNLOAD_RESUME", notificationId)
+            getPendingIntent(NotificationAction.DOWNLOAD_RESUME.name, notificationId)
         )
 
         notificationLayout.setOnClickPendingIntent(
             R.id.pause_button,
-            getPendingIntent("DOWNLOAD_PAUSE", notificationId)
+            getPendingIntent(NotificationAction.DOWNLOAD_PAUSE.name, notificationId)
         )
 
         notificationLayout.setOnClickPendingIntent(
             R.id.cancel_button,
-            getPendingIntent("DOWNLOAD_CANCEL", notificationId)
+            getPendingIntent(NotificationAction.DOWNLOAD_CANCEL.name, notificationId)
         )
 
 

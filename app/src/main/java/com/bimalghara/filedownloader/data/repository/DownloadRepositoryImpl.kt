@@ -14,7 +14,7 @@ import com.bimalghara.filedownloader.utils.FunUtil.toMegabytes
 import com.bimalghara.filedownloader.utils.InterruptedBy
 import com.bimalghara.filedownloader.utils.Logger.logs
 import com.bimalghara.filedownloader.utils.NetworkConnectivity
-import kotlinx.coroutines.async
+import com.bimalghara.filedownloader.utils.NotificationAction
 import kotlinx.coroutines.*
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -36,6 +36,7 @@ class DownloadRepositoryImpl @Inject constructor(
 
     private val downloadJobs = mutableMapOf<Int, Job>()
     private val downloadCalls = mutableMapOf<Int, Call<ResponseBody>>()
+    private val downloadCallbacks = mutableMapOf<Int, DownloadCallback>()
     private val pauseFlags = mutableMapOf<Int, AtomicBoolean>()
     private val cancellationFlags = mutableMapOf<Int, AtomicBoolean>()
 
@@ -60,6 +61,7 @@ class DownloadRepositoryImpl @Inject constructor(
 
         val downloadService = serviceGenerator.createApiService(ApiServiceDownload::class.java)
 
+        downloadCallbacks[downloadEntity.id] = callback
         pauseFlags[downloadEntity.id] = AtomicBoolean(false)
         cancellationFlags[downloadEntity.id] = AtomicBoolean(false)
 
@@ -79,7 +81,6 @@ class DownloadRepositoryImpl @Inject constructor(
             } else {
                 downloadService.downloadFile(downloadEntity.url)
             }
-
             downloadCalls[downloadEntity.id] = downloadCall
 
             var initialProgress = 0
@@ -103,13 +104,13 @@ class DownloadRepositoryImpl @Inject constructor(
                             callback
                         )
                     } else {
-                        removeIdFromMap(downloadEntity.id)
+                        removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_CANCEL)
                         updateDownloadFailed(downloadEntity.id)
                         callback.onDownloadFailed("Empty response body.", downloadEntity.id)
                         logs(logTag, "Empty response body.")
                     }
                 } else {
-                    removeIdFromMap(downloadEntity.id)
+                    removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_CANCEL)
                     updateDownloadFailed(downloadEntity.id)
                     callback.onDownloadFailed(
                         "Download failed with response code: ${response.code()}",
@@ -118,16 +119,17 @@ class DownloadRepositoryImpl @Inject constructor(
                     logs(logTag, "Download failed with response code: ${response.code()}")
                 }
             } catch (e: Exception) {
-                removeIdFromMap(downloadEntity.id)
                 delay(100)
                 if (networkStatusLive.value != NetworkConnectivity.Status.WIFI && downloadEntity.wifiOnly) {
                     logs(logTag, "Download broke WiFi lost: ${e.message} [${networkStatusLive.value}]")
                     updateDownloadPaused(downloadEntity.id, 1, InterruptedBy.NO_WIFI)
                     callback.onDownloadPaused(downloadEntity.id, 1)
+                    removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_PAUSE)
                 } else {
                     logs(logTag, "Download failed: ${e.message} [${networkStatusLive.value}]")
                     updateDownloadFailed(downloadEntity.id)
                     callback.onDownloadFailed("Download failed: ${e.message} [${networkStatusLive.value}]", downloadEntity.id)
+                    removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_CANCEL)
                 }
             }
         }
@@ -137,26 +139,30 @@ class DownloadRepositoryImpl @Inject constructor(
         logs(logTag, "pausing Download: $downloadId")
 
         val pauseFlags = pauseFlags[downloadId]
-
         pauseFlags?.set(true)
     }
 
     fun cancelDownload(downloadId: Int) {
         logs(logTag, "canceling Download: $downloadId")
 
-        val cancellationFlag = cancellationFlags[downloadId]
+        //check if already paused | if yes -> cancel right away
+        val pauseFlags = pauseFlags[downloadId]
+        if(pauseFlags == null){
+            logs(logTag, "canceling Download case: paused")
+            val callback = downloadCallbacks[downloadId]
 
-        cancellationFlag?.set(true)
-    }
+            //eeeeee
+            //if (tempFile.exists()) tempFile.delete()
 
-    private fun clearStack(downloadId: Int){
-        logs(logTag, "Clearing stack: $downloadId")
+            updateDownloadCanceled(downloadId)
+            callback?.onDownloadCancelled(downloadId)
 
-        val downloadCall = downloadCalls[downloadId]
-        val downloadJob = downloadJobs[downloadId]
-
-        downloadCall?.cancel()
-        downloadJob?.cancel()
+            removeIdFromMap(downloadId, NotificationAction.DOWNLOAD_CANCEL)
+        } else {
+            logs(logTag, "canceling Download case: running")
+            val cancellationFlag = cancellationFlags[downloadId]
+            cancellationFlag?.set(true)
+        }
     }
 
     private suspend fun writeResponseBodyToDisk(
@@ -218,8 +224,8 @@ class DownloadRepositoryImpl @Inject constructor(
                     updateDownloadPaused(downloadEntity.id, lastProgress, InterruptedBy.USER)
                     callback.onDownloadPaused(downloadEntity.id, lastProgress)
 
-                    clearStack(downloadEntity.id)
-                    removeIdFromMap(downloadEntity.id)
+                    cancelJob(downloadEntity.id)
+                    removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_PAUSE)
 
                     return@withContext
                 }
@@ -232,11 +238,11 @@ class DownloadRepositoryImpl @Inject constructor(
                     body.close()
 
                     if (tempFile.exists()) tempFile.delete()
-                    updateDownloadCanceled(downloadEntity)
+                    updateDownloadCanceled(downloadEntity.id)
                     callback.onDownloadCancelled(downloadEntity.id)
 
-                    clearStack(downloadEntity.id)
-                    removeIdFromMap(downloadEntity.id)
+                    cancelJob(downloadEntity.id)
+                    removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_CANCEL)
 
                     return@withContext
                 }
@@ -245,25 +251,39 @@ class DownloadRepositoryImpl @Inject constructor(
             raf.close()
             inputStream.close()
             body.close()
-            removeIdFromMap(downloadEntity.id)
+            removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_PAUSE)
             updateDownloadCompleted(downloadEntity.id)
             callback.onDownloadComplete(tmpPath, downloadEntity.id)
         } catch (e: IOException) {
-            removeIdFromMap(downloadEntity.id)
             delay(100)
             if (networkStatusLive.value != NetworkConnectivity.Status.WIFI && downloadEntity.wifiOnly) {
                 logs(logTag, "WiFi lost: ${e.message} [${networkStatusLive.value}]")
                 updateDownloadPaused(downloadEntity.id, lastProgress, InterruptedBy.NO_WIFI)
                 callback.onDownloadPaused(downloadEntity.id, lastProgress)
+                removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_PAUSE)
             } else {
                 logs(logTag, "Failed to write the file to disk: ${e.message} [${networkStatusLive.value}]")
                 updateDownloadFailed(downloadEntity.id)
                 callback.onDownloadFailed("Failed to write the file to disk: ${e.message} [${networkStatusLive.value}]", downloadEntity.id)
+                removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_CANCEL)
             }
         }
     }
 
-    private fun removeIdFromMap(downloadId: Int) {
+    private fun cancelJob(downloadId: Int){
+        logs(logTag, "Clearing stack: $downloadId")
+
+        val downloadCall = downloadCalls[downloadId]
+        val downloadJob = downloadJobs[downloadId]
+
+        downloadCall?.cancel()
+        downloadJob?.cancel()
+    }
+
+    private fun removeIdFromMap(downloadId: Int, action: NotificationAction) {
+        if(action == NotificationAction.DOWNLOAD_CANCEL)
+            downloadCallbacks.remove(downloadId)
+
         pauseFlags.remove(downloadId)
         cancellationFlags.remove(downloadId)
         downloadCalls.remove(downloadId)
@@ -315,10 +335,10 @@ class DownloadRepositoryImpl @Inject constructor(
         )
     }
 
-    private fun updateDownloadCanceled(downloadEntity: DownloadEntity) =
+    private fun updateDownloadCanceled(id: Int) =
         coroutineScope.launch(dispatcherProviderSource.io) {
-            logs(logTag, "updateDownloadCanceled: id=> ${downloadEntity.id}")
-            downloadsDao.deleteDownload(downloadEntity)
+            logs(logTag, "updateDownloadCanceled: id=> $id")
+            downloadsDao.deleteDownload(id)
         }
 
     private fun updateDownloadFailed(id: Int) =
