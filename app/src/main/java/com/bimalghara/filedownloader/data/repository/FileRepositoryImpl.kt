@@ -52,7 +52,7 @@ class FileRepositoryImpl @Inject constructor(
                 destinationUri = destinationUri.toString(),
                 name = "${fileDetails.fileName}.${fileDetails.fileExtension}",//name + ext
                 mimeType = mimeType,
-                sizeTotal = fileDetails.contentLength ?: 0,//in bytes [total]
+                size = fileDetails.contentLength ?: 0,//in bytes [total]
                 supportRange = !fileDetails.acceptRanges.isNullOrBlank(),
                 downloadStatus = DownloadStatus.WAITING.name,
                 updatedAt = System.currentTimeMillis()
@@ -75,8 +75,8 @@ class FileRepositoryImpl @Inject constructor(
     }
 
 
-    override suspend fun requestDownloadsFromLocal(): Flow<List<DownloadEntity>> {
-        return downloadsDao.getDownloads()
+    override fun requestDownloadsFromLocal(): Flow<List<DownloadEntity>> {
+        return downloadsDao.getDownloads().flowOn(dispatcherProviderSource.io)
     }
 
     override suspend fun requestFileDetailsFromNetwork(

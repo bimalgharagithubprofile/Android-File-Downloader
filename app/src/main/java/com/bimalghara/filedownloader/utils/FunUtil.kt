@@ -11,6 +11,7 @@ import kotlinx.coroutines.delay
 import okhttp3.Headers
 import java.net.URL
 import java.text.DecimalFormat
+import java.text.SimpleDateFormat
 import java.util.*
 
 object FunUtil {
@@ -19,6 +20,22 @@ object FunUtil {
         val calendar = Calendar.getInstance()
         calendar.timeInMillis = timestamp
         return calendar.time
+    }
+
+    fun getDay(date: Date): String {
+        val today = Date()
+        val yesterday = Date(System.currentTimeMillis() - (24 * 60 * 60 * 1000))
+        val dateFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+
+        return when {
+            isSameDay(date, today) -> ("Today")
+            isSameDay(date, yesterday) -> ("Yesterday")
+            else -> (dateFormatter.format(date))
+        }
+    }
+    private fun isSameDay(date1: Date, date2: Date): Boolean {
+        val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        return dateFormatter.format(date1) == dateFormatter.format(date2)
     }
 
     fun createFileDetailsFromHeaders(requestUrl: String, headers: Headers): FileDetails {
@@ -108,4 +125,6 @@ object FunUtil {
         }
         return false
     }
+
+
 }

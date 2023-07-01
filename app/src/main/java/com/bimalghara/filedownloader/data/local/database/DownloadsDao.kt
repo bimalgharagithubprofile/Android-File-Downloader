@@ -28,7 +28,11 @@ interface DownloadsDao {
     @Query("UPDATE DownloadEntity SET downloadStatus=:downloadStatus, interruptedBy=:interruptedBy, updatedAt=:timestamp WHERE id=:id")
     suspend fun updateDownloadEnd(id: Int, downloadStatus: String, interruptedBy: String?, timestamp: Long)
 
+    @Query("UPDATE DownloadEntity SET size=:size, downloadedFileUri=:downloadedUri, updatedAt=:timestamp WHERE id=:id")
+    suspend fun updateDownloadedFileUri(id: Int, size: Long, downloadedUri: String, timestamp: Long)
+
     @Delete
     suspend fun deleteDownload(downloadEntity: DownloadEntity)
+
 
 }

@@ -1,7 +1,6 @@
 package com.bimalghara.filedownloader.data.repository
 
 import android.content.Context
-import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.MutableLiveData
 import com.bimalghara.filedownloader.common.dispatcher.DispatcherProviderSource
 import com.bimalghara.filedownloader.data.local.database.DownloadsDao
@@ -83,8 +82,8 @@ class DownloadRepositoryImpl @Inject constructor(
             downloadCalls[downloadEntity.id] = downloadCall
 
             var initialProgress = 0
-            if (destinationFileSize > 0 && downloadEntity.sizeTotal > 0) {
-                initialProgress = fetchProgress(destinationFileSize, downloadEntity.sizeTotal)
+            if (destinationFileSize > 0 && downloadEntity.size > 0) {
+                initialProgress = fetchProgress(destinationFileSize, downloadEntity.size)
             }
 
             updateDownloadStarted(downloadEntity.id, initialProgress)
@@ -176,7 +175,7 @@ class DownloadRepositoryImpl @Inject constructor(
             val buffer = ByteArray(4096)
             var bytesRead: Int
             var totalBytesRead: Long = fileSeek
-            val totalBytes: Long = downloadEntity.sizeTotal
+            val totalBytes: Long = downloadEntity.size
 
             var previousProgress = 0
             while (inputStream.read(buffer).also { bytesRead = it } != -1) {
@@ -268,6 +267,17 @@ class DownloadRepositoryImpl @Inject constructor(
             DownloadStatus.COMPLETED.name,
             100,
             null,
+            System.currentTimeMillis()
+        )
+    }
+
+    fun updateDownloadedFileUri(id: Int, size: Long, downloadedUri:String) =
+        coroutineScope.launch(dispatcherProviderSource.io) {
+        logs(logTag, "updateDownloadedFilePath: id=> $id")
+        downloadsDao.updateDownloadedFileUri(
+            id,
+            size,
+            downloadedUri,
             System.currentTimeMillis()
         )
     }

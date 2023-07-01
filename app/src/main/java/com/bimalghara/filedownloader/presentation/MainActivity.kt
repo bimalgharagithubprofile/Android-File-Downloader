@@ -12,10 +12,14 @@ import androidx.activity.viewModels
 import androidx.appcompat.widget.PopupMenu
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.databinding.ActivityMainBinding
 import com.bimalghara.filedownloader.domain.model.FileDetails
+import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
+import com.bimalghara.filedownloader.presentation.adapters.DownloadsCardsAdapter
 import com.bimalghara.filedownloader.presentation.base.BaseActivity
+import com.bimalghara.filedownloader.presentation.base.OnRecyclerViewItemClick
 import com.bimalghara.filedownloader.utils.*
 import com.bimalghara.filedownloader.utils.FileUtil.protectedDirectories
 import com.bimalghara.filedownloader.utils.FunUtil.toMegabytes
@@ -34,7 +38,7 @@ import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : BaseActivity() {
-    private val TAG = javaClass.simpleName
+    private val logTag = javaClass.simpleName
 
     private lateinit var binding: ActivityMainBinding
 
@@ -42,19 +46,19 @@ class MainActivity : BaseActivity() {
 
     private val permissionManager = PermissionManager.from(this@MainActivity)
 
-    var bottomSheetSettings: BottomSheetBehavior<FrameLayout>?=null
-    var bottomSheetAddNew: BottomSheetBehavior<FrameLayout>?=null
+    private var bottomSheetSettings: BottomSheetBehavior<FrameLayout>?=null
+    private var bottomSheetAddNew: BottomSheetBehavior<FrameLayout>?=null
 
     private val startActivityForDirectoryPickUp =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 val treeUri = result.data?.data
-                logs(TAG, "selected treeUri: ${treeUri.toString()}")
+                logs(logTag, "selected treeUri: ${treeUri.toString()}")
                 if (treeUri != null) {
                     val treeDocument: DocumentFile? = DocumentFile.fromTreeUri(this, treeUri)
-                    logs(TAG, "selected treeDocument: ${treeDocument?.uri?.path}")
+                    logs(logTag, "selected treeDocument: ${treeDocument?.uri?.path}")
                     if(treeDocument != null){
-                        logs(TAG, "selected treeDocument canWrite: ${treeDocument.canWrite()}")
+                        logs(logTag, "selected treeDocument canWrite: ${treeDocument.canWrite()}")
                         if(treeDocument.canWrite()){
                             viewModel.setSelectedPath(treeDocument)
                         } else viewModel._errorSingleEvent.value = SingleEvent(getStringFromResource(R.string.error_write_permission))
@@ -62,6 +66,8 @@ class MainActivity : BaseActivity() {
                 } else viewModel._errorSingleEvent.value = SingleEvent(getStringFromResource(R.string.error_select_directory_failed))
             }
         }
+
+    private lateinit var downloadsCardsAdapter: DownloadsCardsAdapter
 
     override fun initViewBinding() {
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -105,10 +111,10 @@ class MainActivity : BaseActivity() {
                     .rationale("We need all Permissions to save file")
                     .checkPermission { granted ->
                         if (granted) {
-                            logs(TAG, "runtime permissions allowed")
+                            logs(logTag, "runtime permissions allowed")
                             startActivityDirectoryPickUp()
                         } else {
-                            logs(TAG, "runtime permissions denied")
+                            logs(logTag, "runtime permissions denied")
                             viewModel._errorSingleEvent.value = SingleEvent(getStringFromResource(R.string.error_no_permission))
                         }
                     }
@@ -119,6 +125,8 @@ class MainActivity : BaseActivity() {
             setAddNew()
             bottomSheetAddNew?.state = BottomSheetBehavior.STATE_EXPANDED
         }
+
+        setupDownloadsRecyclerview()
     }
 
     override fun onStart() {
@@ -131,19 +139,42 @@ class MainActivity : BaseActivity() {
         startActivityForDirectoryPickUp.launch(intent)
     }
 
+    private fun setupDownloadsRecyclerview() {
+        downloadsCardsAdapter = DownloadsCardsAdapter(this).also {
+            it.setOnItemClickListener(object : OnRecyclerViewItemClick<DownloadEntity> {
+                override fun onItemClick(data: DownloadEntity) {
+                    Log.e(logTag, "Adapter::onItemClick => $data")
+                }
+            })
+        }
+
+        binding.rvDownloadsCards.apply {
+            this.layoutManager = LinearLayoutManager(this@MainActivity, LinearLayoutManager.VERTICAL, false)
+            this.adapter = downloadsCardsAdapter
+        }
+    }
+
     override fun observeViewModel() {
         observeError(binding.root, viewModel.errorSingleEvent)
 
         observe(viewModel.downloadsLiveData) {
-            logs(TAG, "observe downloadsLiveData | $it")
+            logs(logTag, "observe downloadsLiveData | $it")
             when (it) {
                 is ResourceWrapper.Loading -> {
                     binding.rvDownloadsCards.toGone()
                     binding.noRecordsLayout.toVisible()
                 }
                 is ResourceWrapper.Success -> {
-                    binding.noRecordsLayout.toGone()
-                    binding.rvDownloadsCards.toVisible()
+                    if (!it.data.isNullOrEmpty()) {
+                        binding.rvDownloadsCards.toVisible()
+                        binding.noRecordsLayout.toGone()
+
+                        downloadsCardsAdapter.updateDataSet(it.data)
+                        //submitList(data: MutableMap<String, MutableList<DownloadEntity>>?)
+                    } else {
+                        binding.noRecordsLayout.toVisible()
+                        binding.rvDownloadsCards.toGone()
+                    }
                 }
                 else -> {
                     binding.rvDownloadsCards.toGone()
@@ -153,7 +184,7 @@ class MainActivity : BaseActivity() {
         }
 
         observe(viewModel.selectedPathLiveData) {
-            logs(TAG, "observe selectedPathLiveData | $it")
+            logs(logTag, "observe selectedPathLiveData | $it")
             if(it?.uri?.path != null) {
                 val folder = it.uri.path!!.split("/").last()
                 if (protectedDirectories.contains(folder)) {
@@ -167,7 +198,7 @@ class MainActivity : BaseActivity() {
         }
 
         observe(viewModel.fileDetailsLiveData) {
-            logs(TAG, "observe fileDetailsLiveData | $it")
+            logs(logTag, "observe fileDetailsLiveData | $it")
             when (it) {
                 is ResourceWrapper.Loading -> {
                     setGrabbingInfo()
@@ -182,7 +213,7 @@ class MainActivity : BaseActivity() {
         }
 
         observe(viewModel.enqueueLiveData) {
-            logs(TAG, "observe enqueueLiveData | $it")
+            logs(logTag, "observe enqueueLiveData | $it")
             when (it) {
                 is ResourceWrapper.Success -> {
                     setSuccess()

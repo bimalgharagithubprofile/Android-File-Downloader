@@ -2,7 +2,6 @@ package com.bimalghara.filedownloader.presentation
 
 import android.content.Context
 import android.text.Editable
-import android.util.Log
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -16,11 +15,13 @@ import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.domain.repository.FileRepositorySource
 import com.bimalghara.filedownloader.utils.*
 import com.bimalghara.filedownloader.utils.FunUtil.convertTimestampToLocalDate
+import com.bimalghara.filedownloader.utils.FunUtil.getDay
 import com.bimalghara.filedownloader.utils.Logger.logs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -44,8 +45,8 @@ class MainViewModel @Inject constructor(
     private val _selectedPathLiveData = MutableLiveData<DocumentFile?>(null)
     val selectedPathLiveData: LiveData<DocumentFile?> get() = _selectedPathLiveData
 
-    private val _downloadsLiveData = MutableLiveData<ResourceWrapper<List<DownloadEntity>>>()
-    val downloadsLiveData: LiveData<ResourceWrapper<List<DownloadEntity>>> get() = _downloadsLiveData
+    private val _downloadsLiveData = MutableLiveData<ResourceWrapper<MutableMap<String, MutableList<DownloadEntity>>>>()
+    val downloadsLiveData: LiveData<ResourceWrapper<MutableMap<String, MutableList<DownloadEntity>>>> get() = _downloadsLiveData
 
     private val _enqueueLiveData = MutableLiveData<ResourceWrapper<Boolean>>()
     val enqueueLiveData: LiveData<ResourceWrapper<Boolean>> get() = _enqueueLiveData
@@ -74,38 +75,37 @@ class MainViewModel @Inject constructor(
         _selectedPathLiveData.value = documentFile
     }
 
-    fun getUsersDataFromCached(context: Context) = viewModelScope.launch {
-        _downloadsLiveData.value = ResourceWrapper.Loading()
+    fun getUsersDataFromCached(context: Context) = viewModelScope.launch(dispatcherProviderSource.io) {
+        _downloadsLiveData.postValue(ResourceWrapper.Loading())
         fileRepositorySource.requestDownloadsFromLocal().onEach { newList ->
             if (newList.isNotEmpty()) {
-                val completeList: MutableList<DownloadEntity> = arrayListOf()
-                if (_downloadsLiveData.value?.data != null) {
-                    val existingList = _downloadsLiveData.value!!.data!!.toMutableList()
-                    existingList.removeAll(newList)
-                    completeList.addAll(existingList.plus(newList).toSet().toList())
-                } else {
-                    completeList.addAll(newList.toSet().toList())
-                }
+                val groupedRecords = newList.toSet().groupBy { record ->
+                    convertTimestampToLocalDate(record.updatedAt)
+                }.entries.sortedByDescending { it.key }
 
-                if (completeList.isEmpty()) {
-                    _downloadsLiveData.postValue(ResourceWrapper.Error(context.getStringFromResource(R.string.no_downloads)))
-                } else {
-                    val groupedRecords = completeList.groupBy { record ->
-                        convertTimestampToLocalDate(record.updatedAt)
-                    }.entries.sortedByDescending { it.key }
+                val completeList = mutableMapOf<String, MutableList<DownloadEntity>>()
+                for ((date, records) in groupedRecords) {
+                    val day = getDay(date)
+                    logs(logTag, "Date: $date [$day], Records: ${records[0]}")
 
-                    for ((date, records) in groupedRecords) {
-                        logs(logTag, "Date: $date")
-                        for (record in records) {
-                            logs(logTag,"Record: ${record.name}")
-                        }
+                    if(completeList.containsKey(day)){
+                        completeList[day]?.add(records[0])
+                    } else {
+                        completeList[day] = mutableListOf(records[0])
                     }
                 }
+                logs(logTag, "completeList: Days: ${completeList.keys}")
+                logs(logTag, "completeList: Today Downloads: ${completeList["Today"]?.size}")
+                logs(logTag, "completeList: Yesterday Downloads: ${completeList["Yesterday"]?.size}")
+                logs(logTag, "completeList: Today Downloads: ${completeList["28 06 2023"]?.size}")
+
+                _downloadsLiveData.postValue(ResourceWrapper.Success(data = completeList))
+
             } else _downloadsLiveData.postValue(ResourceWrapper.Error(context.getStringFromResource(R.string.no_downloads)))
         }.launchIn(viewModelScope)
     }
 
-    fun getFileDetails(context: Context, url: Editable?) = viewModelScope.launch {
+    fun getFileDetails(context: Context, url: Editable?) = viewModelScope.launch(dispatcherProviderSource.io) {
         val networkStatus = async { getNetworkStatus() }.await()
 
         if (networkStatus != NetworkConnectivity.Status.Available) {

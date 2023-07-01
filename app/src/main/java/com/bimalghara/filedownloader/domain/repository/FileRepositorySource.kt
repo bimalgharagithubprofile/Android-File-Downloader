@@ -21,7 +21,7 @@ interface FileRepositorySource {
         destinationUri: Uri
     ): ResourceWrapper<Boolean>
 
-    suspend fun requestDownloadsFromLocal(): Flow<List<DownloadEntity>>
+    fun requestDownloadsFromLocal(): Flow<List<DownloadEntity>>
 
     suspend fun requestFileDetailsFromNetwork(appContext: Context, url: String): Flow<ResourceWrapper<FileDetails>>
 

@@ -5,12 +5,17 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.webkit.MimeTypeMap
+import com.bimalghara.filedownloader.utils.Logger.logs
 import java.io.*
 
 
 object FileUtil {
 
     val protectedDirectories:MutableList<String> = arrayListOf()
+
+    val imageTypes = arrayOf("image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp")
+    val videoTypes = arrayOf("video/mp4", "video/mpeg", "video/quicktime", "video/x-msvideo")
+    val audioTypes = arrayOf("audio/mp3", "audio/mpeg", "audio/wav", "audio/x-ms-wma", "audio/vnd.rn-realaudio")
 
     init {
         protectedDirectories.addAll(
@@ -56,37 +61,90 @@ object FileUtil {
     }
 
     fun getMimeType(ext: String): String? {
-        // "audio/$ext"
-
         val mimeTypeMap = MimeTypeMap.getSingleton()
         return mimeTypeMap.getMimeTypeFromExtension(ext)
     }
 
-    fun copyFileToUri(context: Context, sourceFilePath: String, destinationUri: Uri): Boolean {
+    fun getFileType(mimeType: String): FileType {
+        return if (imageTypes.contains(mimeType)) {
+            FileType.IMAGE
+        } else if (videoTypes.contains(mimeType)) {
+            FileType.VIDEO
+        } else if (audioTypes.contains(mimeType)) {
+            FileType.AUDIO
+        } else {
+            FileType.OTHER
+        }
+    }
+
+    private fun getFileSize(outputStream: CountingOutputStream): Long {
+        return outputStream.getByteCount()
+    }
+
+    fun copyFileToUri(context: Context, sourceFilePath: String, destinationUri: Uri): Pair<Boolean, Long> {
         val inputStream: InputStream
         val outputStream: OutputStream
 
         try {
             inputStream = FileInputStream(File(sourceFilePath))
-            outputStream = context.contentResolver.openOutputStream(destinationUri) ?: return false
+            outputStream = context.contentResolver.openOutputStream(destinationUri) ?: return Pair(false, 0)
+
+            val countingOutputStream = CountingOutputStream(outputStream)
 
             // Copy the data
             val buffer = ByteArray(4096)
             var bytesRead: Int
             while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                outputStream.write(buffer, 0, bytesRead)
+                countingOutputStream.write(buffer, 0, bytesRead)
             }
 
             // Close the streams
             inputStream.close()
+            countingOutputStream.close()
             outputStream.close()
 
-            return true
-        }
-        catch (e: IOException) {
+            val fileSize = getFileSize(countingOutputStream)
+            logs("Fileutil", "Output File size: $fileSize bytes")
+
+            return Pair(true, fileSize)
+        } catch (e: IOException) {
             e.printStackTrace()
-            return false
+            return Pair(false, 0)
         }
     }
 
+
+}
+
+
+
+class CountingOutputStream(private val wrappedOutputStream: OutputStream) : OutputStream() {
+    private var byteCount: Long = 0
+
+    override fun write(b: Int) {
+        wrappedOutputStream.write(b)
+        byteCount++
+    }
+
+    override fun write(b: ByteArray) {
+        wrappedOutputStream.write(b)
+        byteCount += b.size
+    }
+
+    override fun write(b: ByteArray, off: Int, len: Int) {
+        wrappedOutputStream.write(b, off, len)
+        byteCount += len
+    }
+
+    override fun flush() {
+        wrappedOutputStream.flush()
+    }
+
+    override fun close() {
+        wrappedOutputStream.close()
+    }
+
+    fun getByteCount(): Long {
+        return byteCount
+    }
 }

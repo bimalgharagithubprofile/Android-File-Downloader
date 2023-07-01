@@ -352,7 +352,10 @@ class DownloadService : Service() {
                         val fileCopied = copyFileToUri(baseContext, tmpPath, contentFile.uri)
                         logs(logTag, "onDownloadComplete: copied result => $fileCopied")
 
-                        if (fileCopied) {
+                        if (fileCopied.first) {
+
+                            downloadRepository.updateDownloadedFileUri(downloadId, fileCopied.second, contentFile.uri.toString())
+
                             val tmpFile = File(tmpPath)
                             if (tmpFile.exists()) tmpFile.delete()
                         }

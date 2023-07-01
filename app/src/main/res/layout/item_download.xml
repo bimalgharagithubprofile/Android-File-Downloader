@@ -14,7 +14,7 @@
         app:layout_constraintBottom_toBottomOf="@+id/tvName"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/tvName"
-        app:srcCompat="@drawable/item_pause"
+        tools:srcCompat="@drawable/item_pause"
         tools:ignore="ImageContrastCheck" />
 
     <androidx.appcompat.widget.AppCompatTextView
