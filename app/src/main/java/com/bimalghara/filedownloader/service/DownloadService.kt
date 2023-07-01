@@ -153,7 +153,7 @@ class DownloadService : Service() {
             networkConnectivity.observe().collectLatest {
                 Log.i(logTag, "observe network status: $it")
                 downloadRepository.networkStatusLive.postValue(it)
-                when(it){
+                when(it.first){
                     NetworkConnectivity.Status.WIFI -> actionDownload(PopType.RESUME_WIFI.name)
                     NetworkConnectivity.Status.CELLULAR -> Unit
                     else -> Unit
@@ -211,7 +211,7 @@ class DownloadService : Service() {
 
             when(type) {
                 PopType.RESUME_WIFI.name -> {
-                    if(downloadRepository.networkStatusLive.value == NetworkConnectivity.Status.WIFI){
+                    if(downloadRepository.networkStatusLive.value?.first == NetworkConnectivity.Status.WIFI){
                         interruptedNoWiFiItems = interruptedNoWiFiItems.sortedByDescending { it.updatedAt }
                         for(interruptedNoWiFiItem in interruptedNoWiFiItems){
                             if(interruptedNoWiFiItem.wifiOnly) {
@@ -219,7 +219,7 @@ class DownloadService : Service() {
                             } else
                                 logs(logTag, "resume: wifi: Failed [not selected only over WiFi]")
                         }
-                    } else logs(logTag, "resume: wifi: Failed - no wifi [${downloadRepository.networkStatusLive.value}]")
+                    } else logs(logTag, "resume: wifi: Failed - no wifi [${downloadRepository.networkStatusLive.value?.first}]")
                     /*var allowWifi = 0
                     if (interruptedNoWiFiItems.size >= availableParallelDownload) {
                         allowWifi = availableParallelDownload
@@ -275,12 +275,12 @@ class DownloadService : Service() {
                     for (n in 0 until allowNew){
                         val item = waitingQueuedItems[n]
                         if(item.wifiOnly){
-                            if(downloadRepository.networkStatusLive.value == NetworkConnectivity.Status.WIFI)
+                            if(downloadRepository.networkStatusLive.value?.first == NetworkConnectivity.Status.WIFI)
                                 downloadFileFromNetwork(this@DownloadService, item)
                             else
                                 logs(logTag, "start: new: Failed [selected only over WiFi and WiFi not available at this moment]")
                         } else {
-                            if(downloadRepository.networkStatusLive.value == NetworkConnectivity.Status.WIFI || downloadRepository.networkStatusLive.value == NetworkConnectivity.Status.CELLULAR)
+                            if(downloadRepository.networkStatusLive.value?.first == NetworkConnectivity.Status.WIFI || downloadRepository.networkStatusLive.value?.first == NetworkConnectivity.Status.CELLULAR)
                                 downloadFileFromNetwork(this@DownloadService, item)
                             else
                                 logs(logTag, "start: new: Failed [both WiFi and Cellular not available at this moment]")
@@ -298,13 +298,13 @@ class DownloadService : Service() {
         val pausedQueuedItem = openQueuedList.single { it.id == downloadId }
         if(pausedQueuedItem.size > 0) {
             if(pausedQueuedItem.wifiOnly){
-                if(downloadRepository.networkStatusLive.value == NetworkConnectivity.Status.WIFI){
+                if(downloadRepository.networkStatusLive.value?.first == NetworkConnectivity.Status.WIFI){
                     downloadFileFromNetwork(this@DownloadService, pausedQueuedItem)
-                } else logs(logTag, "resume: User: Failed - no wifi [${downloadRepository.networkStatusLive.value}]")
+                } else logs(logTag, "resume: User: Failed - no wifi [${downloadRepository.networkStatusLive.value?.first}]")
             } else {
-                if(downloadRepository.networkStatusLive.value == NetworkConnectivity.Status.WIFI || downloadRepository.networkStatusLive.value == NetworkConnectivity.Status.CELLULAR) {
+                if(downloadRepository.networkStatusLive.value?.first == NetworkConnectivity.Status.WIFI || downloadRepository.networkStatusLive.value?.first == NetworkConnectivity.Status.CELLULAR) {
                     downloadFileFromNetwork(this@DownloadService, pausedQueuedItem)
-                } else logs(logTag, "resume: User: Failed - no network [${downloadRepository.networkStatusLive.value}]")
+                } else logs(logTag, "resume: User: Failed - no network [${downloadRepository.networkStatusLive.value?.first}]")
             }
         }
     }

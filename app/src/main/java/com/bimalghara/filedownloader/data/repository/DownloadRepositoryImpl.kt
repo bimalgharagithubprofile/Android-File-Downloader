@@ -40,7 +40,7 @@ class DownloadRepositoryImpl @Inject constructor(
     private val pauseFlags = mutableMapOf<Int, AtomicBoolean>()
     private val cancellationFlags = mutableMapOf<Int, AtomicBoolean>()
 
-    val networkStatusLive = MutableLiveData(NetworkConnectivity.Status.Unavailable)
+    val networkStatusLive = MutableLiveData(Pair(NetworkConnectivity.Status.Unavailable, 0L))
 
 
     suspend fun getOpenQueuedList(): List<DownloadEntity> {
@@ -120,7 +120,7 @@ class DownloadRepositoryImpl @Inject constructor(
                 }
             } catch (e: Exception) {
                 delay(100)
-                if (networkStatusLive.value != NetworkConnectivity.Status.WIFI && downloadEntity.wifiOnly) {
+                if (networkStatusLive.value?.first != NetworkConnectivity.Status.WIFI && downloadEntity.wifiOnly) {
                     logs(logTag, "Download broke WiFi lost: ${e.message} [${networkStatusLive.value}]")
                     updateDownloadPaused(downloadEntity.id, 1, InterruptedBy.NO_WIFI)
                     callback.onDownloadPaused(downloadEntity.id, 1)
@@ -256,7 +256,7 @@ class DownloadRepositoryImpl @Inject constructor(
             callback.onDownloadComplete(tmpPath, downloadEntity.id)
         } catch (e: IOException) {
             delay(100)
-            if (networkStatusLive.value != NetworkConnectivity.Status.WIFI && downloadEntity.wifiOnly) {
+            if (networkStatusLive.value?.first != NetworkConnectivity.Status.WIFI && downloadEntity.wifiOnly) {
                 logs(logTag, "WiFi lost: ${e.message} [${networkStatusLive.value}]")
                 updateDownloadPaused(downloadEntity.id, lastProgress, InterruptedBy.NO_WIFI)
                 callback.onDownloadPaused(downloadEntity.id, lastProgress)
