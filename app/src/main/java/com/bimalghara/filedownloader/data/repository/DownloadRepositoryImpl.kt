@@ -118,9 +118,16 @@ class DownloadRepositoryImpl @Inject constructor(
                 }
             } catch (e: Exception) {
                 removeIdFromMap(downloadEntity.id)
-                updateDownloadFailed(downloadEntity.id)
-                callback.onDownloadFailed("Download failed: ${e.message}", downloadEntity.id)
-                logs(logTag, "Download failed: ${e.message}")
+                delay(100)
+                if (networkStatusLive.value != NetworkConnectivity.Status.WIFI && downloadEntity.wifiOnly) {
+                    logs(logTag, "Download broke WiFi lost: ${e.message} [${networkStatusLive.value}]")
+                    updateDownloadPaused(downloadEntity.id, InterruptedBy.NO_WIFI)
+                    callback.onDownloadPaused(downloadEntity.id)
+                } else {
+                    logs(logTag, "Download failed: ${e.message} [${networkStatusLive.value}]")
+                    updateDownloadFailed(downloadEntity.id)
+                    callback.onDownloadFailed("Download failed: ${e.message} [${networkStatusLive.value}]", downloadEntity.id)
+                }
             }
         }
     }
