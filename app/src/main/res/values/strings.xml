@@ -51,5 +51,6 @@
     <string name="back">Back</string>
     <string name="waiting_in_queue">Waiting in queue</string>
     <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
 
 </resources>

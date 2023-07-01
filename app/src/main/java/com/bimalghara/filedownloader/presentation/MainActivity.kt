@@ -22,7 +22,7 @@ import com.bimalghara.filedownloader.presentation.base.BaseActivity
 import com.bimalghara.filedownloader.presentation.base.OnRecyclerViewItemClick
 import com.bimalghara.filedownloader.utils.*
 import com.bimalghara.filedownloader.utils.FileUtil.protectedDirectories
-import com.bimalghara.filedownloader.utils.FunUtil.toMegabytes
+import com.bimalghara.filedownloader.utils.FileUtil.toSize
 import com.bimalghara.filedownloader.utils.Logger.logs
 import com.bimalghara.filedownloader.utils.permissions.PermissionManager
 import com.bimalghara.filedownloader.utils.permissions.Permissions
@@ -316,7 +316,7 @@ class MainActivity : BaseActivity() {
         binding.addNewSheet.groupFailed.toGone()
 
 
-        val size = fileDetails?.contentLength?.toMegabytes()
+        val size = fileDetails?.contentLength?.toSize()
         if(!size.isNullOrBlank()) {
             binding.addNewSheet.tvFileSize.text = size
         } else binding.addNewSheet.tvFileSize.toInvisible()

@@ -84,12 +84,13 @@ object FunUtil {
         }
     }
 
-    fun Long.toMegabytes(): String {
-        val megabyte = 1024.0 * 1024.0
-        val result = this.toDouble() / megabyte
+    fun Long.toSpeed(): String {
+        if (this <= 0) return "0 Bytes"
 
-        val decimalFormat = DecimalFormat("#.#")
-        return decimalFormat.format(result) + " MB"
+        val units = arrayOf("Bytes", "Kbps", "Mbps", "Gbps", "Tbps")
+        val digitGroups = (Math.log10(this.toDouble()) / Math.log10(1024.0)).toInt()
+
+        return String.format("%.1f %s", this / Math.pow(1024.0, digitGroups.toDouble()), units[digitGroups])
     }
 
     fun fetchProgress(currentFileSize: Long, totalFileSize: Long): Int {

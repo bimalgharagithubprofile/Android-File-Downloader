@@ -19,8 +19,10 @@ import com.bimalghara.filedownloader.data.network.DownloadCallback
 import com.bimalghara.filedownloader.data.repository.DownloadRepositoryImpl
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.notification.AppNotificationManager
+import com.bimalghara.filedownloader.notification.model.NotificationData
 import com.bimalghara.filedownloader.utils.*
 import com.bimalghara.filedownloader.utils.FileUtil.copyFileToUri
+import com.bimalghara.filedownloader.utils.FunUtil.toSpeed
 import com.bimalghara.filedownloader.utils.Logger.logs
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
@@ -220,37 +222,7 @@ class DownloadService : Service() {
                                 logs(logTag, "resume: wifi: Failed [not selected only over WiFi]")
                         }
                     } else logs(logTag, "resume: wifi: Failed - no wifi [${downloadRepository.networkStatusLive.value?.first}]")
-                    /*var allowWifi = 0
-                    if (interruptedNoWiFiItems.size >= availableParallelDownload) {
-                        allowWifi = availableParallelDownload
-                        availableParallelDownload = 0
-                        logs(logTag, "slot-available: 0 waiting for Wifi: $availableParallelDownload")
-                    } else {
-                        allowWifi = interruptedNoWiFiItems.size
-                        availableParallelDownload = availableParallelDownload.minus(interruptedNoWiFiItems.size)
-                        logs(logTag, "slot-available: $availableParallelDownload waiting for Wifi: ${interruptedNoWiFiItems.size}")
-                    }
-                    logs(logTag, "Resume: wifi: $allowWifi")
-
-                    // start all waiting for wifi as per slot
-                    interruptedNoWiFiItems = interruptedNoWiFiItems.sortedByDescending { it.updatedAt }
-                    for (n in 0 until allowWifi){
-                        val item = interruptedNoWiFiItems[n]
-                        if(item.wifiOnly) {
-                            downloadFileFromNetwork(this@DownloadService, item)
-                        } else
-                            logs(logTag, "resume: wifi: Failed [not selected only over WiFi]")
-                    }*/
                 }
-                /*PopType.RESUME_USER.name -> {
-                    //slot full -> downloading & resumed waiting for wifi
-                    if(availableParallelDownload <= 0) {
-                        return@launch
-                    }
-
-                    //slot available
-                    val downloadId = 1
-                }*/
                 PopType.START.name -> {
                     //slot full -> downloading & resumed waiting for wifi
                     if(availableParallelDownload <= 0) {
@@ -341,14 +313,30 @@ class DownloadService : Service() {
                 override fun onDownloadStarted(initialProgress: Int, downloadId: Int) {
                     logs(logTag, "onDownloadStarted() => progress => $initialProgress, downloadId => $downloadId")
                     notificationManager?.cancelNotification(downloadId)
-                    notificationManager?.showFileDownloadNotification(initialProgress, downloadId, NotificationStatus.STARTED, false)
+                    val downloadSpeed = (downloadRepository.networkStatusLive.value?.second ?: 0L).toSpeed()
+                    val notificationData = NotificationData(
+                        id = downloadId,
+                        status = NotificationStatus.STARTED,
+                        name = "",
+                        progress = initialProgress,
+                        actionData = "0B of 0B",
+                        speed = downloadSpeed
+                    )
+                    notificationManager?.showFileDownloadNotification(notificationData)
                 }
 
                 override fun onDownloadPaused(downloadId: Int, lastProgress: Int) {
                     logs(logTag, "onDownloadPaused() => downloadId => $downloadId")
                     notificationManager?.cancelNotification(downloadId)
                     val isIndeterminate = lastProgress <= 0
-                    notificationManager?.showFileDownloadNotification(lastProgress,  downloadId, NotificationStatus.PAUSED, isIndeterminate)
+                    val notificationData = NotificationData(
+                        id = downloadId,
+                        status = NotificationStatus.PAUSED,
+                        name = "",
+                        progress = lastProgress,
+                        isIndeterminate = isIndeterminate
+                    )
+                    notificationManager?.showFileDownloadNotification(notificationData)
                 }
 
                 override fun onDownloadCancelled(downloadId: Int) {
@@ -358,12 +346,30 @@ class DownloadService : Service() {
 
                 override fun onInfiniteProgressUpdate(downloadedData: String, downloadId: Int) {
                     logs(logTag, "onInfiniteDownloadProgress() => $downloadedData, downloadId => $downloadId")
-                    notificationManager?.showFileDownloadNotification(0, downloadId, NotificationStatus.IN_PROGRESS, true)
+                    val downloadSpeed = (downloadRepository.networkStatusLive.value?.second ?: 0L).toSpeed()
+                    val notificationData = NotificationData(
+                        id = downloadId,
+                        status = NotificationStatus.IN_PROGRESS,
+                        name = "",
+                        actionData = "0B",
+                        speed = downloadSpeed,
+                        isIndeterminate = true
+                    )
+                    notificationManager?.showFileDownloadNotification(notificationData)
                 }
 
                 override fun onProgressUpdate(progress: Int, downloadId: Int) {
                     logs(logTag, "onProgressUpdate: $progress, downloadId => $downloadId")
-                    notificationManager?.showFileDownloadNotification(progress, downloadId, NotificationStatus.IN_PROGRESS, false)
+                    val downloadSpeed = (downloadRepository.networkStatusLive.value?.second ?: 0L).toSpeed()
+                    val notificationData = NotificationData(
+                        id = downloadId,
+                        status = NotificationStatus.IN_PROGRESS,
+                        name = "",
+                        actionData = "0B of 0B",
+                        progress = progress,
+                        speed = downloadSpeed
+                    )
+                    notificationManager?.showFileDownloadNotification(notificationData)
                 }
 
                 override fun onDownloadComplete(tmpPath: String, downloadId: Int) {

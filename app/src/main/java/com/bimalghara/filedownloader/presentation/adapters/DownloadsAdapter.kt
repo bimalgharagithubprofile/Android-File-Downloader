@@ -15,7 +15,7 @@ import com.bimalghara.filedownloader.presentation.base.OnRecyclerViewItemClick
 import com.bimalghara.filedownloader.utils.*
 import com.bimalghara.filedownloader.utils.FileUtil.getDomainName
 import com.bimalghara.filedownloader.utils.FileUtil.getFileType
-import com.bimalghara.filedownloader.utils.FunUtil.toMegabytes
+import com.bimalghara.filedownloader.utils.FileUtil.toSize
 
 /**
  * Created by BimalGhara
@@ -119,7 +119,7 @@ class DownloadsAdapter(
                             FileType.AUDIO -> holder.binding.ivIcon.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.item_audio))
                             else -> holder.binding.ivIcon.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.item_doc))
                         }
-                        holder.binding.tvAction.text = itemDownload.size.toMegabytes()
+                        holder.binding.tvAction.text = itemDownload.size.toSize()
                         holder.binding.progressIndicator.toGone()
                         holder.binding.tvFrom.text = getDomainName(itemDownload.url)
                         holder.binding.tvFrom.toVisible()

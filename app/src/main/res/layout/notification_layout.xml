@@ -1,62 +1,156 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="16sp">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:paddingStart="@dimen/_15sdp"
+    android:paddingEnd="@dimen/_15sdp"
+    android:paddingTop="@dimen/_15sdp"
+    android:paddingBottom="@dimen/_5sdp"
+    android:background="@color/white">
 
-    <ProgressBar
-        android:id="@+id/progress_bar"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
+    <ImageView
+        android:id="@+id/ivIcon"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:indeterminate="true"
-        android:indeterminateTint="@color/text_title"
-        android:max="100"
-        android:progress="0"
-        android:visibility="visible" />
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:src="@drawable/downloader"
+        tools:ignore="ImageContrastCheck" />
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_15sdp"
+        android:layout_marginTop="@dimen/_minus5sdp"
+        android:fontFamily="@font/plus_jakarta_sans_semi_bold"
+        android:text="@string/app_name"
+        android:maxLines="1"
+        android:textColor="@color/notification_hint"
+        android:textSize="@dimen/text_sub"
+        android:layout_toEndOf="@+id/ivIcon"
+        android:layout_alignParentTop="true" />
+    <TextView
+        android:id="@+id/tvETA"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_20sdp"
+        android:fontFamily="@font/plus_jakarta_sans_medium"
+        android:text="00:43 Left"
+        android:textColor="@color/notification_hint"
+        android:textSize="@dimen/notification_hint"
+        android:layout_toEndOf="@+id/tvTitle"
+        android:layout_alignParentTop="true"/>
+    <TextView
+        android:id="@+id/tvName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_15sdp"
+        android:layout_marginTop="@dimen/_5sdp"
+        android:ellipsize="middle"
+        android:fontFamily="@font/plus_jakarta_sans_semi_bold"
+        android:gravity="start|center_vertical"
+        tools:text="Kafka Kuru Kuru Kafka Kuru Kuru Kuru - 10 hour.mp3"
+        android:maxLines="1"
+        android:textColor="@color/text_title"
+        android:textSize="@dimen/text_sub"
+        android:layout_toEndOf="@+id/ivIcon"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@+id/tvTitle" />
+    <TextView
+        android:id="@+id/tvAction"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_15sdp"
+        android:layout_marginTop="@dimen/_1sdp"
+        android:fontFamily="@font/plus_jakarta_sans_regular"
+        tools:text="69.5 MB of 420 MB"
+        android:textColor="@color/notification_hint"
+        android:textSize="@dimen/text_hint"
+        android:layout_toEndOf="@+id/ivIcon"
+        android:layout_below="@+id/tvName" />
+    <ImageView
+        android:id="@+id/tvSeparator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_8sdp"
+        android:src="@drawable/separator"
+        android:layout_toEndOf="@+id/tvAction"
+        android:layout_below="@+id/tvName"
+        app:tint="@color/notification_hint" />
 
+    <TextView
+        android:id="@+id/tvSpeed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_20sdp"
+        android:layout_marginTop="@dimen/_1sdp"
+        android:fontFamily="@font/plus_jakarta_sans_regular"
+        tools:text="27.5 Mbps"
+        android:textColor="@color/notification_hint"
+        android:textSize="@dimen/text_hint"
+        android:layout_toEndOf="@+id/tvAction"
+        android:layout_below="@+id/tvName" />
+    <ProgressBar
+        android:id="@+id/progressIndicator"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_15sdp"
+        android:layout_marginTop="@dimen/_8sdp"
+        android:layout_alignParentEnd="true"
+        android:layout_toEndOf="@+id/ivIcon"
+        android:layout_below="@+id/tvAction"
+        android:progressBackgroundTint="@color/bg1"
+        android:progressTint="@color/blue"
+        tools:progress="40" />
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20sp"
+        android:layout_marginTop="@dimen/_5sdp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@+id/progressIndicator"
         android:orientation="horizontal">
-
         <Button
             android:id="@+id/pause_button"
             android:layout_width="0sp"
-            android:layout_weight="1"
-            android:textSize="16dp"
-            android:textStyle="bold"
-            android:textColor="@color/text_title"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
             android:layout_height="40sp"
-            android:text="Pause" />
-
+            android:layout_weight="1"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:textAllCaps="false"
+            android:fontFamily="@font/plus_jakarta_sans_bold"
+            android:text="@string/pause"
+            android:textColor="@color/text_title"
+            android:textSize="@dimen/text_hint" />
         <Button
             android:id="@+id/resume_button"
             android:layout_width="0sp"
-            android:layout_weight="1"
-            android:textSize="16dp"
-            android:textStyle="bold"
-            android:textColor="@color/text_title"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
             android:layout_height="40sp"
             android:layout_marginHorizontal="10sp"
-            android:text="Resume" />
-
+            android:layout_weight="1"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:textAllCaps="false"
+            android:fontFamily="@font/plus_jakarta_sans_bold"
+            android:text="@string/resume"
+            android:textColor="@color/text_title"
+            android:textSize="@dimen/text_hint" />
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/bar"/>
         <Button
             android:id="@+id/cancel_button"
             android:layout_width="0sp"
-            android:layout_weight="1"
-            android:textSize="16dp"
-            android:textStyle="bold"
             android:layout_height="40sp"
-            android:textColor="@color/text_title"
+            android:layout_weight="1"
             android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:text="Cancel" />
-
-
-
+            android:textAllCaps="false"
+            android:fontFamily="@font/plus_jakarta_sans_bold"
+            android:text="@string/cancel"
+            android:textColor="@color/text_title"
+            android:textSize="@dimen/text_hint" />
     </LinearLayout>
 
-</FrameLayout>
+</RelativeLayout>

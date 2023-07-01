@@ -9,8 +9,8 @@ import com.bimalghara.filedownloader.data.network.retrofit.ApiServiceGenerator
 import com.bimalghara.filedownloader.data.network.retrofit.service.ApiServiceDownload
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.utils.DownloadStatus
+import com.bimalghara.filedownloader.utils.FileUtil.toSize
 import com.bimalghara.filedownloader.utils.FunUtil.fetchProgress
-import com.bimalghara.filedownloader.utils.FunUtil.toMegabytes
 import com.bimalghara.filedownloader.utils.InterruptedBy
 import com.bimalghara.filedownloader.utils.Logger.logs
 import com.bimalghara.filedownloader.utils.NetworkConnectivity
@@ -120,7 +120,7 @@ class DownloadRepositoryImpl @Inject constructor(
                 }
             } catch (e: Exception) {
                 delay(100)
-                if (networkStatusLive.value?.first != NetworkConnectivity.Status.WIFI && downloadEntity.wifiOnly) {
+                if (networkStatusLive.value?.first != NetworkConnectivity.Status.WIFI || networkStatusLive.value?.first != NetworkConnectivity.Status.CELLULAR) {
                     logs(logTag, "Download broke WiFi lost: ${e.message} [${networkStatusLive.value}]")
                     updateDownloadPaused(downloadEntity.id, 1, InterruptedBy.NO_WIFI)
                     callback.onDownloadPaused(downloadEntity.id, 1)
@@ -208,7 +208,7 @@ class DownloadRepositoryImpl @Inject constructor(
                     }
                 } else {
                     callback.onInfiniteProgressUpdate(
-                        totalBytesRead.toMegabytes(),
+                        totalBytesRead.toSize(),
                         downloadEntity.id
                     )
                 }
@@ -256,7 +256,7 @@ class DownloadRepositoryImpl @Inject constructor(
             callback.onDownloadComplete(tmpPath, downloadEntity.id)
         } catch (e: IOException) {
             delay(100)
-            if (networkStatusLive.value?.first != NetworkConnectivity.Status.WIFI && downloadEntity.wifiOnly) {
+            if (networkStatusLive.value?.first != NetworkConnectivity.Status.WIFI || networkStatusLive.value?.first != NetworkConnectivity.Status.CELLULAR) {
                 logs(logTag, "WiFi lost: ${e.message} [${networkStatusLive.value}]")
                 updateDownloadPaused(downloadEntity.id, lastProgress, InterruptedBy.NO_WIFI)
                 callback.onDownloadPaused(downloadEntity.id, lastProgress)

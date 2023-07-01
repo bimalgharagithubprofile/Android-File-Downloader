@@ -8,6 +8,7 @@ import android.webkit.MimeTypeMap
 import com.bimalghara.filedownloader.utils.Logger.logs
 import java.io.*
 import java.net.URL
+import java.text.DecimalFormat
 
 
 object FileUtil {
@@ -59,6 +60,15 @@ object FileUtil {
                 )
             )
         }
+    }
+
+
+    fun Long.toSize(): String {
+        val megabyte = 1024.0 * 1024.0
+        val result = this.toDouble() / megabyte
+
+        val decimalFormat = DecimalFormat("#.#")
+        return decimalFormat.format(result) + " MB"
     }
 
     fun getDomainName(urlString: String): String {

@@ -7,6 +7,7 @@
     <color name="text_title">#2B2F39</color>
     <color name="text_sub">#6B6B6B</color><!--text sub-->
     <color name="text_hint">#858181</color><!--text hint-->
+    <color name="notification_hint">#505050</color><!--notification text hint-->
 
     <color name="white">#FFFFFF</color>
 
@@ -24,6 +25,7 @@
 
     <color name="action_icon">#787878</color><!--action icon-->
 
+    <color name="blue">#0481FF</color>
     <color name="orange">#FBC441</color>
     <color name="grey">#A7A7A7</color>
     <color name="green">#72BD6C</color>
