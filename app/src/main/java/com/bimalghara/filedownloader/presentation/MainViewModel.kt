@@ -74,7 +74,7 @@ class MainViewModel @Inject constructor(
         _selectedPathLiveData.value = documentFile
     }
 
-    private fun getUsersDataFromCached(context: Context) = viewModelScope.launch {
+    fun getUsersDataFromCached(context: Context) = viewModelScope.launch {
         _downloadsLiveData.value = ResourceWrapper.Loading()
         fileRepositorySource.requestDownloadsFromLocal().onEach { newList ->
             if (newList.isNotEmpty()) {
@@ -92,7 +92,8 @@ class MainViewModel @Inject constructor(
                 } else {
                     val groupedRecords = completeList.groupBy { record ->
                         convertTimestampToLocalDate(record.updatedAt)
-                    }
+                    }.entries.sortedByDescending { it.key }
+
                     for ((date, records) in groupedRecords) {
                         logs(logTag, "Date: $date")
                         for (record in records) {

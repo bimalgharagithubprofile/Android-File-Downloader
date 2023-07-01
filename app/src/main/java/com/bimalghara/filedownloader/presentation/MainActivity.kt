@@ -121,6 +121,11 @@ class MainActivity : BaseActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        viewModel.getUsersDataFromCached(this)
+    }
+
     private fun startActivityDirectoryPickUp() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
         startActivityForDirectoryPickUp.launch(intent)
@@ -128,6 +133,24 @@ class MainActivity : BaseActivity() {
 
     override fun observeViewModel() {
         observeError(binding.root, viewModel.errorSingleEvent)
+
+        observe(viewModel.downloadsLiveData) {
+            logs(TAG, "observe downloadsLiveData | $it")
+            when (it) {
+                is ResourceWrapper.Loading -> {
+                    binding.rvDownloadsCards.toGone()
+                    binding.noRecordsLayout.toVisible()
+                }
+                is ResourceWrapper.Success -> {
+                    binding.noRecordsLayout.toGone()
+                    binding.rvDownloadsCards.toVisible()
+                }
+                else -> {
+                    binding.rvDownloadsCards.toGone()
+                    binding.noRecordsLayout.toVisible()
+                }
+            }
+        }
 
         observe(viewModel.selectedPathLiveData) {
             logs(TAG, "observe selectedPathLiveData | $it")
