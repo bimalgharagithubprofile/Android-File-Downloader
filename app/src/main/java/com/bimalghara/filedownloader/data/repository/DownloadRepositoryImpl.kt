@@ -291,8 +291,7 @@ class DownloadRepositoryImpl @Inject constructor(
     }
 
 
-    private fun updateDownloadStarted(id: Int, initialProgress: Int) =
-        coroutineScope.launch(dispatcherProviderSource.io) {
+    private suspend fun updateDownloadStarted(id: Int, initialProgress: Int) {
         logs(logTag, "updateDownloadStarted: id=> $id ($initialProgress)")
         downloadsDao.updateDownloadProgress(
             id,
@@ -302,8 +301,7 @@ class DownloadRepositoryImpl @Inject constructor(
         )
     }
 
-    private fun updateDownloadCompleted(id: Int) =
-        coroutineScope.launch(dispatcherProviderSource.io) {
+    private suspend fun updateDownloadCompleted(id: Int) {
         logs(logTag, "updateDownloadCompleted: id=> $id")
         downloadsDao.updateDownloadProgress(
             id,
@@ -313,13 +311,13 @@ class DownloadRepositoryImpl @Inject constructor(
         )
     }
 
-    fun updateDownloadedFileUri(id: Int, size: Long, downloadedUri:String) =
-        coroutineScope.launch(dispatcherProviderSource.io) {
-        logs(logTag, "updateDownloadedFilePath: id=> $id")
-        downloadsDao.updateDownloadedFileUri(
+    private suspend fun updateDownloadFailed(id: Int) {
+        logs(logTag, "updateDownloadFailed: id=> $id")
+        downloadsDao.updateDownloadEnd(
             id,
-            size,
-            downloadedUri,
+            DownloadStatus.FAILED.name,
+            0,
+            null,
             System.currentTimeMillis()
         )
     }
@@ -335,21 +333,21 @@ class DownloadRepositoryImpl @Inject constructor(
         )
     }
 
+
+    fun updateDownloadedFileUri(id: Int, size: Long, downloadedUri:String) =
+        coroutineScope.launch(dispatcherProviderSource.io) {
+            logs(logTag, "updateDownloadedFilePath: id=> $id")
+            downloadsDao.updateDownloadedFileUri(
+                id,
+                size,
+                downloadedUri,
+                System.currentTimeMillis()
+            )
+        }
+
     private fun updateDownloadCanceled(id: Int) =
         coroutineScope.launch(dispatcherProviderSource.io) {
             logs(logTag, "updateDownloadCanceled: id=> $id")
             downloadsDao.deleteDownload(id)
         }
-
-    private fun updateDownloadFailed(id: Int) =
-        coroutineScope.launch(dispatcherProviderSource.io) {
-        logs(logTag, "updateDownloadFailed: id=> $id")
-        downloadsDao.updateDownloadEnd(
-            id,
-            DownloadStatus.FAILED.name,
-            0,
-            null,
-            System.currentTimeMillis()
-        )
-    }
 }
