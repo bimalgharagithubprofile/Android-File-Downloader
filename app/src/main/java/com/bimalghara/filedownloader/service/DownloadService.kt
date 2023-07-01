@@ -59,9 +59,13 @@ class DownloadService : Service() {
                     }
                     "DOWNLOAD_RESUME" -> {
                         logs(logTag, "DOWNLOAD_RESUME")
-                        actionDownload(PopType.RESUME_USER.name)
+                        val downloadId = intent.getIntExtra("DOWNLOAD_ID", -1)
+                        if (downloadId != -1) {
+                            actionResume(downloadId)
+                        }
                     }
                     "DOWNLOAD_PAUSE" -> {
+                        logs(logTag, "DOWNLOAD_PAUSE")
                         val downloadId = intent.getIntExtra("DOWNLOAD_ID", -1)
                         if (downloadId != -1) {
                             actionPause(downloadId)
@@ -188,24 +192,35 @@ class DownloadService : Service() {
 
             val groupedQueuedItems = openQueuedList.groupBy { it.downloadStatus }
             val downloadingQueuedItems = groupedQueuedItems[DownloadStatus.DOWNLOADING.name] ?: emptyList()
-            val pausedQueuedItems = groupedQueuedItems[DownloadStatus.PAUSED.name] ?: emptyList()
+            var pausedQueuedItems = groupedQueuedItems[DownloadStatus.PAUSED.name] ?: emptyList()
             var waitingQueuedItems = groupedQueuedItems[DownloadStatus.WAITING.name] ?: emptyList()
 
             val groupedPausedQueuedItems = pausedQueuedItems.groupBy { it.interruptedBy }
             var interruptedNoWiFiItems = groupedPausedQueuedItems[InterruptedBy.NO_WIFI.name] ?: emptyList()
 
             //slot full -> all downloading
-            if (downloadingQueuedItems.size >= settingParallelDownload) {
-                logs(logTag, "slot-available: 0 Downloading: ${downloadingQueuedItems.size}")
+            val totInProgress = downloadingQueuedItems.size.plus(pausedQueuedItems.size)
+            if (totInProgress >= settingParallelDownload) {
+                logs(logTag, "slot-available: 0 Downloading: ${downloadingQueuedItems.size} Paused: ${pausedQueuedItems.size}")
                 return@launch
             } else {
-                availableParallelDownload = availableParallelDownload.minus(downloadingQueuedItems.size)
-                logs(logTag, "slot-available: $availableParallelDownload already downloading: ${downloadingQueuedItems.size}")
+                availableParallelDownload = availableParallelDownload.minus(totInProgress)
+                if(availableParallelDownload<0) availableParallelDownload=0
+                logs(logTag, "slot-available: $availableParallelDownload already downloading: ${downloadingQueuedItems.size} already paused: ${pausedQueuedItems.size}")
             }
 
             when(type) {
                 PopType.RESUME_WIFI.name -> {
-                    var allowWifi = 0
+                    if(downloadRepository.networkStatusLive.value == NetworkConnectivity.Status.WIFI){
+                        interruptedNoWiFiItems = interruptedNoWiFiItems.sortedByDescending { it.updatedAt }
+                        for(interruptedNoWiFiItem in interruptedNoWiFiItems){
+                            if(interruptedNoWiFiItem.wifiOnly) {
+                                downloadFileFromNetwork(this@DownloadService, interruptedNoWiFiItem)
+                            } else
+                                logs(logTag, "resume: wifi: Failed [not selected only over WiFi]")
+                        }
+                    } else logs(logTag, "resume: wifi: Failed - no wifi [${downloadRepository.networkStatusLive.value}]")
+                    /*var allowWifi = 0
                     if (interruptedNoWiFiItems.size >= availableParallelDownload) {
                         allowWifi = availableParallelDownload
                         availableParallelDownload = 0
@@ -225,9 +240,9 @@ class DownloadService : Service() {
                             downloadFileFromNetwork(this@DownloadService, item)
                         } else
                             logs(logTag, "resume: wifi: Failed [not selected only over WiFi]")
-                    }
+                    }*/
                 }
-                PopType.RESUME_USER.name -> {
+                /*PopType.RESUME_USER.name -> {
                     //slot full -> downloading & resumed waiting for wifi
                     if(availableParallelDownload <= 0) {
                         return@launch
@@ -235,7 +250,7 @@ class DownloadService : Service() {
 
                     //slot available
                     val downloadId = 1
-                }
+                }*/
                 PopType.START.name -> {
                     //slot full -> downloading & resumed waiting for wifi
                     if(availableParallelDownload <= 0) {
@@ -279,6 +294,20 @@ class DownloadService : Service() {
         }
     }
 
+    private fun actionResume(downloadId: Int) = coroutineScope.launch {
+        val pausedQueuedItem = openQueuedList.single { it.id == downloadId }
+        if(pausedQueuedItem.size > 0) {
+            if(pausedQueuedItem.wifiOnly){
+                if(downloadRepository.networkStatusLive.value == NetworkConnectivity.Status.WIFI){
+                    downloadFileFromNetwork(this@DownloadService, pausedQueuedItem)
+                } else logs(logTag, "resume: User: Failed - no wifi [${downloadRepository.networkStatusLive.value}]")
+            } else {
+                if(downloadRepository.networkStatusLive.value == NetworkConnectivity.Status.WIFI || downloadRepository.networkStatusLive.value == NetworkConnectivity.Status.CELLULAR) {
+                    downloadFileFromNetwork(this@DownloadService, pausedQueuedItem)
+                } else logs(logTag, "resume: User: Failed - no network [${downloadRepository.networkStatusLive.value}]")
+            }
+        }
+    }
     private fun actionPause(downloadId: Int) = coroutineScope.launch {
         downloadRepository.pauseDownload(downloadId)
     }
@@ -311,32 +340,34 @@ class DownloadService : Service() {
 
                 override fun onDownloadStarted(initialProgress: Int, downloadId: Int) {
                     logs(logTag, "onDownloadStarted() => progress => $initialProgress, downloadId => $downloadId")
-
-                    notificationManager?.showFileDownloadNotification(initialProgress, downloadId)
+                    notificationManager?.cancelNotification(downloadId)
+                    notificationManager?.showFileDownloadNotification(initialProgress, downloadId, NotificationStatus.STARTED, false)
                 }
 
-                override fun onDownloadPaused(downloadId: Int) {
+                override fun onDownloadPaused(downloadId: Int, lastProgress: Int) {
                     logs(logTag, "onDownloadPaused() => downloadId => $downloadId")
+                    notificationManager?.cancelNotification(downloadId)
+                    val isIndeterminate = lastProgress <= 0
+                    notificationManager?.showFileDownloadNotification(lastProgress,  downloadId, NotificationStatus.PAUSED, isIndeterminate)
                 }
 
                 override fun onDownloadCancelled(downloadId: Int) {
                     logs(logTag, "onDownloadCancelled() => downloadId => $downloadId")
+                    notificationManager?.cancelNotification(downloadId)
                 }
 
                 override fun onInfiniteProgressUpdate(downloadedData: String, downloadId: Int) {
                     logs(logTag, "onInfiniteDownloadProgress() => $downloadedData, downloadId => $downloadId")
+                    notificationManager?.showFileDownloadNotification(0, downloadId, NotificationStatus.IN_PROGRESS, true)
                 }
 
                 override fun onProgressUpdate(progress: Int, downloadId: Int) {
                     logs(logTag, "onProgressUpdate: $progress, downloadId => $downloadId")
-
-                    notificationManager?.showFileDownloadNotification(progress, downloadId)
+                    notificationManager?.showFileDownloadNotification(progress, downloadId, NotificationStatus.IN_PROGRESS, false)
                 }
 
                 override fun onDownloadComplete(tmpPath: String, downloadId: Int) {
                     logs(logTag, "onDownloadComplete: downloadId => $downloadId | tmpPath=>$tmpPath")
-
-                    notificationManager?.showFileDownloadNotification(100, downloadId)
 
                     val targetDocumentFileUri: Uri? = Uri.parse(downloadEntity.destinationUri)
                     val targetDocumentFile:DocumentFile? = targetDocumentFileUri?.let { DocumentFile.fromTreeUri(appContext, it) }
@@ -360,10 +391,13 @@ class DownloadService : Service() {
                             if (tmpFile.exists()) tmpFile.delete()
                         }
                     } else logs(logTag, "onDownloadComplete: output file not created")
+
+                    notificationManager?.cancelNotification(downloadId)
                 }
 
                 override fun onDownloadFailed(errorMessage: String, downloadId: Int) {
                     logs(logTag, "onDownloadFailed: $errorMessage, downloadId => $downloadId")
+                    notificationManager?.cancelNotification(downloadId)
                 }
             })
         } else{

@@ -43,6 +43,7 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="DOWNLOAD_PAUSE" />
+                <action android:name="DOWNLOAD_RESUME" />
                 <action android:name="DOWNLOAD_CANCEL" />
             </intent-filter>
         </receiver>

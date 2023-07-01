@@ -14,6 +14,7 @@ import com.bimalghara.filedownloader.utils.FunUtil.toMegabytes
 import com.bimalghara.filedownloader.utils.InterruptedBy
 import com.bimalghara.filedownloader.utils.Logger.logs
 import com.bimalghara.filedownloader.utils.NetworkConnectivity
+import kotlinx.coroutines.async
 import kotlinx.coroutines.*
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -62,7 +63,7 @@ class DownloadRepositoryImpl @Inject constructor(
         pauseFlags[downloadEntity.id] = AtomicBoolean(false)
         cancellationFlags[downloadEntity.id] = AtomicBoolean(false)
 
-        downloadJobs[downloadEntity.id] = coroutineScope.launch(dispatcherProviderSource.io) {
+        downloadJobs[downloadEntity.id] = coroutineScope.launch {
 
             var destinationFileSize = 0L
             val outputFile = File(tmpPath)
@@ -122,7 +123,7 @@ class DownloadRepositoryImpl @Inject constructor(
                 if (networkStatusLive.value != NetworkConnectivity.Status.WIFI && downloadEntity.wifiOnly) {
                     logs(logTag, "Download broke WiFi lost: ${e.message} [${networkStatusLive.value}]")
                     updateDownloadPaused(downloadEntity.id, 1, InterruptedBy.NO_WIFI)
-                    callback.onDownloadPaused(downloadEntity.id)
+                    callback.onDownloadPaused(downloadEntity.id, 1)
                 } else {
                     logs(logTag, "Download failed: ${e.message} [${networkStatusLive.value}]")
                     updateDownloadFailed(downloadEntity.id)
@@ -136,22 +137,24 @@ class DownloadRepositoryImpl @Inject constructor(
         logs(logTag, "pausing Download: $downloadId")
 
         val pauseFlags = pauseFlags[downloadId]
-        val downloadCall = downloadCalls[downloadId]
-        val downloadJob = downloadJobs[downloadId]
 
         pauseFlags?.set(true)
-        downloadCall?.cancel()
-        downloadJob?.cancel()
     }
 
     fun cancelDownload(downloadId: Int) {
         logs(logTag, "canceling Download: $downloadId")
 
         val cancellationFlag = cancellationFlags[downloadId]
+
+        cancellationFlag?.set(true)
+    }
+
+    private fun clearStack(downloadId: Int){
+        logs(logTag, "Clearing stack: $downloadId")
+
         val downloadCall = downloadCalls[downloadId]
         val downloadJob = downloadJobs[downloadId]
 
-        cancellationFlag?.set(true)
         downloadCall?.cancel()
         downloadJob?.cancel()
     }
@@ -162,7 +165,7 @@ class DownloadRepositoryImpl @Inject constructor(
         downloadEntity: DownloadEntity,
         tmpPath: String,
         callback: DownloadCallback
-    ) {
+    ) = withContext(dispatcherProviderSource.io) {
         var lastProgress = 0
         try {
             val tempFile = File(tmpPath)
@@ -206,26 +209,36 @@ class DownloadRepositoryImpl @Inject constructor(
 
                 // paused
                 if (pauseFlags.containsKey(downloadEntity.id) && pauseFlags[downloadEntity.id]?.get() == true) {
-                    logs(logTag, "Need to pause")
+                    logs(logTag, "Force pause")
+
                     raf.close()
                     inputStream.close()
                     body.close()
-                    removeIdFromMap(downloadEntity.id)
+
                     updateDownloadPaused(downloadEntity.id, lastProgress, InterruptedBy.USER)
-                    callback.onDownloadPaused(downloadEntity.id)
-                    return
+                    callback.onDownloadPaused(downloadEntity.id, lastProgress)
+
+                    clearStack(downloadEntity.id)
+                    removeIdFromMap(downloadEntity.id)
+
+                    return@withContext
                 }
                 // canceled
                 if (cancellationFlags.containsKey(downloadEntity.id) && cancellationFlags[downloadEntity.id]?.get() == true) {
-                    logs(logTag, "Need to cancel")
+                    logs(logTag, "Force cancel")
+
                     raf.close()
                     inputStream.close()
                     body.close()
-                    removeIdFromMap(downloadEntity.id)
+
                     if (tempFile.exists()) tempFile.delete()
                     updateDownloadCanceled(downloadEntity)
                     callback.onDownloadCancelled(downloadEntity.id)
-                    return
+
+                    clearStack(downloadEntity.id)
+                    removeIdFromMap(downloadEntity.id)
+
+                    return@withContext
                 }
             }
 
@@ -241,7 +254,7 @@ class DownloadRepositoryImpl @Inject constructor(
             if (networkStatusLive.value != NetworkConnectivity.Status.WIFI && downloadEntity.wifiOnly) {
                 logs(logTag, "WiFi lost: ${e.message} [${networkStatusLive.value}]")
                 updateDownloadPaused(downloadEntity.id, lastProgress, InterruptedBy.NO_WIFI)
-                callback.onDownloadPaused(downloadEntity.id)
+                callback.onDownloadPaused(downloadEntity.id, lastProgress)
             } else {
                 logs(logTag, "Failed to write the file to disk: ${e.message} [${networkStatusLive.value}]")
                 updateDownloadFailed(downloadEntity.id)
@@ -258,7 +271,8 @@ class DownloadRepositoryImpl @Inject constructor(
     }
 
 
-    private suspend fun updateDownloadStarted(id: Int, initialProgress: Int) {
+    private fun updateDownloadStarted(id: Int, initialProgress: Int) =
+        coroutineScope.launch(dispatcherProviderSource.io) {
         logs(logTag, "updateDownloadStarted: id=> $id ($initialProgress)")
         downloadsDao.updateDownloadProgress(
             id,
@@ -268,7 +282,8 @@ class DownloadRepositoryImpl @Inject constructor(
         )
     }
 
-    private suspend fun updateDownloadCompleted(id: Int) {
+    private fun updateDownloadCompleted(id: Int) =
+        coroutineScope.launch(dispatcherProviderSource.io) {
         logs(logTag, "updateDownloadCompleted: id=> $id")
         downloadsDao.updateDownloadProgress(
             id,
@@ -306,7 +321,8 @@ class DownloadRepositoryImpl @Inject constructor(
             downloadsDao.deleteDownload(downloadEntity)
         }
 
-    private suspend fun updateDownloadFailed(id: Int) {
+    private fun updateDownloadFailed(id: Int) =
+        coroutineScope.launch(dispatcherProviderSource.io) {
         logs(logTag, "updateDownloadFailed: id=> $id")
         downloadsDao.updateDownloadEnd(
             id,
