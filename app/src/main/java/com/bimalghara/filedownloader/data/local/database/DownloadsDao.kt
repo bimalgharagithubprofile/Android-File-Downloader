@@ -22,8 +22,8 @@ interface DownloadsDao {
     suspend fun getOpenQueuedList(): List<DownloadEntity>
 
 
-    @Query("UPDATE DownloadEntity SET downloadStatus=:downloadStatus, progress=:progress, updatedAt=:timestamp WHERE id=:id")
-    suspend fun updateDownloadProgress(id: Int, downloadStatus: String, progress: Int, timestamp: Long)
+    @Query("UPDATE DownloadEntity SET downloadStatus=:downloadStatus, progress=:progress, interruptedBy=:interruptedBy, updatedAt=:timestamp WHERE id=:id")
+    suspend fun updateDownloadProgress(id: Int, downloadStatus: String, progress: Int, interruptedBy: String?, timestamp: Long)
 
     @Query("UPDATE DownloadEntity SET downloadStatus=:downloadStatus, interruptedBy=:interruptedBy, updatedAt=:timestamp WHERE id=:id")
     suspend fun updateDownloadEnd(id: Int, downloadStatus: String, interruptedBy: String?, timestamp: Long)

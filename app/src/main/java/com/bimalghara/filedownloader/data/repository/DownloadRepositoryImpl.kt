@@ -1,6 +1,8 @@
 package com.bimalghara.filedownloader.data.repository
 
 import android.content.Context
+import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.MutableLiveData
 import com.bimalghara.filedownloader.common.dispatcher.DispatcherProviderSource
 import com.bimalghara.filedownloader.data.local.database.DownloadsDao
 import com.bimalghara.filedownloader.data.network.DownloadCallback
@@ -12,6 +14,7 @@ import com.bimalghara.filedownloader.utils.FunUtil.fetchProgress
 import com.bimalghara.filedownloader.utils.FunUtil.toMegabytes
 import com.bimalghara.filedownloader.utils.InterruptedBy
 import com.bimalghara.filedownloader.utils.Logger.logs
+import com.bimalghara.filedownloader.utils.NetworkConnectivity
 import kotlinx.coroutines.*
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -36,13 +39,22 @@ class DownloadRepositoryImpl @Inject constructor(
     private val pauseFlags = mutableMapOf<Int, AtomicBoolean>()
     private val cancellationFlags = mutableMapOf<Int, AtomicBoolean>()
 
+    val networkStatusLive = MutableLiveData(NetworkConnectivity.Status.Unavailable)
 
-    suspend fun getOpenQueuedList(): List<DownloadEntity>{
+
+    suspend fun getOpenQueuedList(): List<DownloadEntity> {
         return downloadsDao.getOpenQueuedList()
     }
 
 
-    fun downloadFile(appContext: Context, downloadEntity: DownloadEntity, tmpPath: String, callback: DownloadCallback) {
+    fun downloadFile(
+        appContext: Context,
+        downloadEntity: DownloadEntity,
+        tmpPath: String,
+        callback: DownloadCallback
+    ) {
+        logs(logTag, "downloading... id => ${downloadEntity.id}")
+
         if (downloadJobs.containsKey(downloadEntity.id))
             return
 
@@ -83,7 +95,13 @@ class DownloadRepositoryImpl @Inject constructor(
                 if (response.isSuccessful) {
                     val responseBody = response.body()
                     if (responseBody != null) {
-                        writeResponseBodyToDisk(appContext, responseBody, downloadEntity, tmpPath,callback)
+                        writeResponseBodyToDisk(
+                            appContext,
+                            responseBody,
+                            downloadEntity,
+                            tmpPath,
+                            callback
+                        )
                     } else {
                         removeIdFromMap(downloadEntity.id)
                         updateDownloadFailed(downloadEntity.id)
@@ -93,20 +111,23 @@ class DownloadRepositoryImpl @Inject constructor(
                 } else {
                     removeIdFromMap(downloadEntity.id)
                     updateDownloadFailed(downloadEntity.id)
-                    callback.onDownloadFailed("Download failed with response code: ${response.code()}", downloadEntity.id)
+                    callback.onDownloadFailed(
+                        "Download failed with response code: ${response.code()}",
+                        downloadEntity.id
+                    )
                     logs(logTag, "Download failed with response code: ${response.code()}")
                 }
             } catch (e: Exception) {
                 removeIdFromMap(downloadEntity.id)
                 updateDownloadFailed(downloadEntity.id)
                 callback.onDownloadFailed("Download failed: ${e.message}", downloadEntity.id)
-                logs(logTag,"Download failed: ${e.message}")
+                logs(logTag, "Download failed: ${e.message}")
             }
         }
     }
 
     fun pauseDownload(downloadId: Int) {
-        logs(logTag, "pausing Download: $downloadId" )
+        logs(logTag, "pausing Download: $downloadId")
 
         val pauseFlags = pauseFlags[downloadId]
         val downloadCall = downloadCalls[downloadId]
@@ -116,8 +137,9 @@ class DownloadRepositoryImpl @Inject constructor(
         downloadCall?.cancel()
         downloadJob?.cancel()
     }
+
     fun cancelDownload(downloadId: Int) {
-        logs(logTag, "canceling Download: $downloadId" )
+        logs(logTag, "canceling Download: $downloadId")
 
         val cancellationFlag = cancellationFlags[downloadId]
         val downloadCall = downloadCalls[downloadId]
@@ -154,7 +176,7 @@ class DownloadRepositoryImpl @Inject constructor(
             val buffer = ByteArray(4096)
             var bytesRead: Int
             var totalBytesRead: Long = fileSeek
-            val totalBytes:Long = downloadEntity.sizeTotal
+            val totalBytes: Long = downloadEntity.sizeTotal
 
             var previousProgress = 0
             while (inputStream.read(buffer).also { bytesRead = it } != -1) {
@@ -163,19 +185,20 @@ class DownloadRepositoryImpl @Inject constructor(
 
                 if (totalBytes > 0) {
                     val currentProgress = fetchProgress(totalBytesRead, totalBytes)
-                    if (currentProgress != previousProgress && currentProgress<100) {
-                        updateDownloadProgress(downloadEntity.id, currentProgress)
+                    if (currentProgress != previousProgress && currentProgress < 100) {
                         callback.onProgressUpdate(currentProgress, downloadEntity.id)
                         previousProgress = currentProgress
                     }
                 } else {
-                    //updateDownloadProgress(downloadEntity.id, -100)//eeeeeeeee
-                    callback.onInfiniteProgressUpdate(totalBytesRead.toMegabytes(), downloadEntity.id)
+                    callback.onInfiniteProgressUpdate(
+                        totalBytesRead.toMegabytes(),
+                        downloadEntity.id
+                    )
                 }
 
                 // paused
                 if (pauseFlags.containsKey(downloadEntity.id) && pauseFlags[downloadEntity.id]?.get() == true) {
-                    logs(logTag,"Need to pause")
+                    logs(logTag, "Need to pause")
                     raf.close()
                     inputStream.close()
                     body.close()
@@ -186,7 +209,7 @@ class DownloadRepositoryImpl @Inject constructor(
                 }
                 // canceled
                 if (cancellationFlags.containsKey(downloadEntity.id) && cancellationFlags[downloadEntity.id]?.get() == true) {
-                    logs(logTag,"Need to cancel")
+                    logs(logTag, "Need to cancel")
                     raf.close()
                     inputStream.close()
                     body.close()
@@ -205,9 +228,17 @@ class DownloadRepositoryImpl @Inject constructor(
             updateDownloadCompleted(downloadEntity.id)
             callback.onDownloadComplete(tmpPath, downloadEntity.id)
         } catch (e: IOException) {
-            //eeeeeeeeeeee need mark either pasued by network or failed
-            logs(logTag, "Failed to write the file to disk: ${e.message}")
-            callback.onDownloadFailed("Failed to write the file to disk: ${e.message}", downloadEntity.id)
+            removeIdFromMap(downloadEntity.id)
+            delay(100)
+            if (networkStatusLive.value != NetworkConnectivity.Status.WIFI && downloadEntity.wifiOnly) {
+                logs(logTag, "WiFi lost: ${e.message} [${networkStatusLive.value}]")
+                updateDownloadPaused(downloadEntity.id, InterruptedBy.NO_WIFI)
+                callback.onDownloadPaused(downloadEntity.id)
+            } else {
+                logs(logTag, "Failed to write the file to disk: ${e.message} [${networkStatusLive.value}]")
+                updateDownloadFailed(downloadEntity.id)
+                callback.onDownloadFailed("Failed to write the file to disk: ${e.message} [${networkStatusLive.value}]", downloadEntity.id)
+            }
         }
     }
 
@@ -221,26 +252,49 @@ class DownloadRepositoryImpl @Inject constructor(
 
     private suspend fun updateDownloadStarted(id: Int, initialProgress: Int) {
         logs(logTag, "updateDownloadStarted: id=> $id ($initialProgress)")
-        downloadsDao.updateDownloadProgress(id, DownloadStatus.DOWNLOADING.name, initialProgress, System.currentTimeMillis())
+        downloadsDao.updateDownloadProgress(
+            id,
+            DownloadStatus.DOWNLOADING.name,
+            initialProgress,
+            null,
+            System.currentTimeMillis()
+        )
     }
-    private suspend fun updateDownloadProgress(id: Int, currentProgress: Int) {
-        logs(logTag, "updateDownloadProgress: id=> $id ($currentProgress)")
-        //downloadsDao.updateDownloadProgress(id, DownloadStatus.DOWNLOADING.name, currentProgress, System.currentTimeMillis())
-    }
+
     private suspend fun updateDownloadCompleted(id: Int) {
         logs(logTag, "updateDownloadCompleted: id=> $id")
-        downloadsDao.updateDownloadProgress(id, DownloadStatus.COMPLETED.name, 100, System.currentTimeMillis())
+        downloadsDao.updateDownloadProgress(
+            id,
+            DownloadStatus.COMPLETED.name,
+            100,
+            null,
+            System.currentTimeMillis()
+        )
     }
+
     private suspend fun updateDownloadPaused(id: Int, interruptedBy: InterruptedBy) {
         logs(logTag, "updateDownloadPaused: id=> $id | by=> ${interruptedBy.name}")
-        downloadsDao.updateDownloadEnd(id, DownloadStatus.PAUSED.name, interruptedBy.name, System.currentTimeMillis())
+        downloadsDao.updateDownloadEnd(
+            id,
+            DownloadStatus.PAUSED.name,
+            interruptedBy.name,
+            System.currentTimeMillis()
+        )
     }
-    private fun updateDownloadCanceled(downloadEntity: DownloadEntity) = coroutineScope.launch(dispatcherProviderSource.io) {
-        logs(logTag, "updateDownloadCanceled: id=> ${downloadEntity.id}")
-        downloadsDao.deleteDownload(downloadEntity)
-    }
+
+    private fun updateDownloadCanceled(downloadEntity: DownloadEntity) =
+        coroutineScope.launch(dispatcherProviderSource.io) {
+            logs(logTag, "updateDownloadCanceled: id=> ${downloadEntity.id}")
+            downloadsDao.deleteDownload(downloadEntity)
+        }
+
     private suspend fun updateDownloadFailed(id: Int) {
         logs(logTag, "updateDownloadFailed: id=> $id")
-        downloadsDao.updateDownloadEnd(id, DownloadStatus.FAILED.name, null, System.currentTimeMillis())
+        downloadsDao.updateDownloadEnd(
+            id,
+            DownloadStatus.FAILED.name,
+            null,
+            System.currentTimeMillis()
+        )
     }
 }

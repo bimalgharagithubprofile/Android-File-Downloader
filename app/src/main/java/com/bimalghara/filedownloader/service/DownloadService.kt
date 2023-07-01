@@ -38,7 +38,6 @@ class DownloadService : Service() {
     lateinit var dataStore: DataStoreSource
     @Inject
     lateinit var networkConnectivity: NetworkConnectivity
-    private var networkStatusLive = NetworkConnectivity.Status.Unavailable
 
     private var notificationManager: AppNotificationManager? = null
 
@@ -149,7 +148,7 @@ class DownloadService : Service() {
         coroutineScope.launch {
             networkConnectivity.observe().collectLatest {
                 Log.i(logTag, "observe network status: $it")
-                networkStatusLive = it
+                downloadRepository.networkStatusLive.postValue(it)
                 when(it){
                     NetworkConnectivity.Status.WIFI -> actionDownload(PopType.RESUME_WIFI.name)
                     NetworkConnectivity.Status.CELLULAR -> Unit
@@ -261,12 +260,12 @@ class DownloadService : Service() {
                     for (n in 0 until allowNew){
                         val item = waitingQueuedItems[n]
                         if(item.wifiOnly){
-                            if(networkStatusLive == NetworkConnectivity.Status.WIFI)
+                            if(downloadRepository.networkStatusLive.value == NetworkConnectivity.Status.WIFI)
                                 downloadFileFromNetwork(this@DownloadService, item)
                             else
                                 logs(logTag, "start: new: Failed [selected only over WiFi and WiFi not available at this moment]")
                         } else {
-                            if(networkStatusLive == NetworkConnectivity.Status.WIFI || networkStatusLive == NetworkConnectivity.Status.CELLULAR)
+                            if(downloadRepository.networkStatusLive.value == NetworkConnectivity.Status.WIFI || downloadRepository.networkStatusLive.value == NetworkConnectivity.Status.CELLULAR)
                                 downloadFileFromNetwork(this@DownloadService, item)
                             else
                                 logs(logTag, "start: new: Failed [both WiFi and Cellular not available at this moment]")
@@ -288,7 +287,7 @@ class DownloadService : Service() {
     }
 
     private fun downloadFileFromNetwork(appContext:Context, downloadEntity: DownloadEntity) = coroutineScope.launch {
-        logs(logTag, "downloading... id => ${downloadEntity.id}")
+        logs(logTag, "process download... id => ${downloadEntity.id}")
 
         if(fileCacheDir == null) {
             logs(logTag, "downloading terminated [cache dir not found] id => ${downloadEntity.id}")
@@ -307,6 +306,7 @@ class DownloadService : Service() {
         }
 
         if (fileCreated){
+            logs(logTag, "tmpFile opened")
             downloadRepository.downloadFile(baseContext, downloadEntity, tempFilePath,  object : DownloadCallback {
 
                 override fun onDownloadStarted(initialProgress: Int, downloadId: Int) {
@@ -363,6 +363,8 @@ class DownloadService : Service() {
                     logs(logTag, "onDownloadFailed: $errorMessage, downloadId => $downloadId")
                 }
             })
+        } else{
+            logs(logTag, "tmpFile not opened")
         }
     }
 
