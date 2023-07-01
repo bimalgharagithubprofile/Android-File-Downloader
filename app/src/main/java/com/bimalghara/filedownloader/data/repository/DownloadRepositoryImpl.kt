@@ -121,7 +121,7 @@ class DownloadRepositoryImpl @Inject constructor(
                 delay(100)
                 if (networkStatusLive.value != NetworkConnectivity.Status.WIFI && downloadEntity.wifiOnly) {
                     logs(logTag, "Download broke WiFi lost: ${e.message} [${networkStatusLive.value}]")
-                    updateDownloadPaused(downloadEntity.id, InterruptedBy.NO_WIFI)
+                    updateDownloadPaused(downloadEntity.id, 1, InterruptedBy.NO_WIFI)
                     callback.onDownloadPaused(downloadEntity.id)
                 } else {
                     logs(logTag, "Download failed: ${e.message} [${networkStatusLive.value}]")
@@ -163,6 +163,7 @@ class DownloadRepositoryImpl @Inject constructor(
         tmpPath: String,
         callback: DownloadCallback
     ) {
+        var lastProgress = 0
         try {
             val tempFile = File(tmpPath)
             val raf = RandomAccessFile(tempFile, "rw")
@@ -194,6 +195,7 @@ class DownloadRepositoryImpl @Inject constructor(
                     if (currentProgress != previousProgress && currentProgress < 100) {
                         callback.onProgressUpdate(currentProgress, downloadEntity.id)
                         previousProgress = currentProgress
+                        lastProgress = currentProgress
                     }
                 } else {
                     callback.onInfiniteProgressUpdate(
@@ -209,7 +211,7 @@ class DownloadRepositoryImpl @Inject constructor(
                     inputStream.close()
                     body.close()
                     removeIdFromMap(downloadEntity.id)
-                    updateDownloadPaused(downloadEntity.id, InterruptedBy.USER)
+                    updateDownloadPaused(downloadEntity.id, lastProgress, InterruptedBy.USER)
                     callback.onDownloadPaused(downloadEntity.id)
                     return
                 }
@@ -238,7 +240,7 @@ class DownloadRepositoryImpl @Inject constructor(
             delay(100)
             if (networkStatusLive.value != NetworkConnectivity.Status.WIFI && downloadEntity.wifiOnly) {
                 logs(logTag, "WiFi lost: ${e.message} [${networkStatusLive.value}]")
-                updateDownloadPaused(downloadEntity.id, InterruptedBy.NO_WIFI)
+                updateDownloadPaused(downloadEntity.id, lastProgress, InterruptedBy.NO_WIFI)
                 callback.onDownloadPaused(downloadEntity.id)
             } else {
                 logs(logTag, "Failed to write the file to disk: ${e.message} [${networkStatusLive.value}]")
@@ -261,7 +263,6 @@ class DownloadRepositoryImpl @Inject constructor(
         downloadsDao.updateDownloadProgress(
             id,
             DownloadStatus.DOWNLOADING.name,
-            initialProgress,
             null,
             System.currentTimeMillis()
         )
@@ -272,7 +273,6 @@ class DownloadRepositoryImpl @Inject constructor(
         downloadsDao.updateDownloadProgress(
             id,
             DownloadStatus.COMPLETED.name,
-            100,
             null,
             System.currentTimeMillis()
         )
@@ -289,11 +289,12 @@ class DownloadRepositoryImpl @Inject constructor(
         )
     }
 
-    private suspend fun updateDownloadPaused(id: Int, interruptedBy: InterruptedBy) {
-        logs(logTag, "updateDownloadPaused: id=> $id | by=> ${interruptedBy.name}")
+    private suspend fun updateDownloadPaused(id: Int, lastProgress: Int, interruptedBy: InterruptedBy) {
+        logs(logTag, "updateDownloadPaused: id=> $id | lastProgress=> ${lastProgress}| by=> ${interruptedBy.name}")
         downloadsDao.updateDownloadEnd(
             id,
             DownloadStatus.PAUSED.name,
+            lastProgress,
             interruptedBy.name,
             System.currentTimeMillis()
         )
@@ -310,6 +311,7 @@ class DownloadRepositoryImpl @Inject constructor(
         downloadsDao.updateDownloadEnd(
             id,
             DownloadStatus.FAILED.name,
+            0,
             null,
             System.currentTimeMillis()
         )

@@ -7,6 +7,7 @@ import android.os.Environment
 import android.webkit.MimeTypeMap
 import com.bimalghara.filedownloader.utils.Logger.logs
 import java.io.*
+import java.net.URL
 
 
 object FileUtil {
@@ -58,6 +59,11 @@ object FileUtil {
                 )
             )
         }
+    }
+
+    fun getDomainName(urlString: String): String {
+        val url = URL(urlString)
+        return url.host
     }
 
     fun getMimeType(ext: String): String? {

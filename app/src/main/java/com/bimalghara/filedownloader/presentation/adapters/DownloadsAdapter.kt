@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -11,11 +12,10 @@ import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.databinding.ItemDownloadBinding
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.presentation.base.OnRecyclerViewItemClick
-import com.bimalghara.filedownloader.utils.DownloadStatus
-import com.bimalghara.filedownloader.utils.FileType
+import com.bimalghara.filedownloader.utils.*
+import com.bimalghara.filedownloader.utils.FileUtil.getDomainName
 import com.bimalghara.filedownloader.utils.FileUtil.getFileType
 import com.bimalghara.filedownloader.utils.FunUtil.toMegabytes
-import com.bimalghara.filedownloader.utils.getStringFromResource
 
 /**
  * Created by BimalGhara
@@ -63,6 +63,11 @@ class DownloadsAdapter(
                                 R.drawable.item_pending
                             )
                         )
+                        holder.binding.progressIndicator.setIndicatorColor(ResourcesCompat.getColor(context.resources, R.color.green, null))
+                        holder.binding.tvAction.text = context.getStringFromResource(R.string.error_waiting_in_queue)
+                        holder.binding.progressIndicator.toVisible()
+                        holder.binding.tvFrom.toGone()
+                        holder.binding.tvFromSeparator.toGone()
                     }
                     DownloadStatus.DOWNLOADING.name -> {
                         holder.binding.ivIcon.setImageDrawable(
@@ -71,15 +76,27 @@ class DownloadsAdapter(
                                 R.drawable.item_pause
                             )
                         )
+                        holder.binding.tvFrom.toGone()
+                        holder.binding.tvFromSeparator.toGone()
                     }
                     DownloadStatus.PAUSED.name -> {
-                        holder.binding.ivIcon.setImageDrawable(
-                            ContextCompat.getDrawable(
-                                context,
-                                R.drawable.item_play
-                            )
-                        )
-                        holder.binding.tvAction.text = context.getStringFromResource(R.string.error_paused_download)
+                        if(itemDownload.interruptedBy == InterruptedBy.NO_WIFI.name) {
+                            holder.binding.ivIcon.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.item_pending))
+                            holder.binding.tvAction.text =
+                                context.getStringFromResource(R.string.error_waiting_for_wifi)
+                            holder.binding.progressIndicator.setIndicatorColor(ResourcesCompat.getColor(context.resources, R.color.orange, null))
+                        } else {
+                            holder.binding.ivIcon.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.item_play))
+                            holder.binding.tvAction.text =
+                                context.getStringFromResource(R.string.error_paused_download)
+                            holder.binding.progressIndicator.setIndicatorColor(ResourcesCompat.getColor(context.resources, R.color.grey, null))
+                        }
+                        if(itemDownload.lastProgress > 0)
+                            holder.binding.tvProgress.text = "${itemDownload.lastProgress}%"
+                        holder.binding.progressIndicator.setProgressCompat(itemDownload.lastProgress, false)
+                        holder.binding.progressIndicator.toVisible()
+                        holder.binding.tvFrom.toGone()
+                        holder.binding.tvFromSeparator.toGone()
                     }
                     DownloadStatus.FAILED.name -> {
                         holder.binding.ivIcon.setImageDrawable(
@@ -89,6 +106,11 @@ class DownloadsAdapter(
                             )
                         )
                         holder.binding.tvAction.text = context.getStringFromResource(R.string.error_failed_to_download)
+                        holder.binding.progressIndicator.setProgressCompat(100, false)
+                        holder.binding.progressIndicator.setIndicatorColor(ResourcesCompat.getColor(context.resources, R.color.red, null))
+                        holder.binding.progressIndicator.toVisible()
+                        holder.binding.tvFrom.toGone()
+                        holder.binding.tvFromSeparator.toGone()
                     }
                     else -> {
                         when(getFileType(itemDownload.mimeType)){
@@ -98,6 +120,10 @@ class DownloadsAdapter(
                             else -> holder.binding.ivIcon.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.item_doc))
                         }
                         holder.binding.tvAction.text = itemDownload.size.toMegabytes()
+                        holder.binding.progressIndicator.toGone()
+                        holder.binding.tvFrom.text = getDomainName(itemDownload.url)
+                        holder.binding.tvFrom.toVisible()
+                        holder.binding.tvFromSeparator.toVisible()
                     }
                 }
 

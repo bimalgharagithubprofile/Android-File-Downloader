@@ -76,6 +76,7 @@
         android:layout_width="wrap_content"
         android:layout_height="0dp"
         android:layout_marginStart="@dimen/_10sdp"
+        android:layout_marginTop="@dimen/_2sdp"
         app:srcCompat="@drawable/separator"
         app:layout_constraintStart_toEndOf="@+id/tvAction"
         app:layout_constraintEnd_toStartOf="@+id/tvFrom"
