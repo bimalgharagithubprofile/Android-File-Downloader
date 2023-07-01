@@ -225,7 +225,7 @@ class DownloadRepositoryImpl @Inject constructor(
     }
     private suspend fun updateDownloadProgress(id: Int, currentProgress: Int) {
         logs(logTag, "updateDownloadProgress: id=> $id ($currentProgress)")
-        downloadsDao.updateDownloadProgress(id, DownloadStatus.DOWNLOADING.name, currentProgress, System.currentTimeMillis())
+        //downloadsDao.updateDownloadProgress(id, DownloadStatus.DOWNLOADING.name, currentProgress, System.currentTimeMillis())
     }
     private suspend fun updateDownloadCompleted(id: Int) {
         logs(logTag, "updateDownloadCompleted: id=> $id")
@@ -241,6 +241,6 @@ class DownloadRepositoryImpl @Inject constructor(
     }
     private suspend fun updateDownloadFailed(id: Int) {
         logs(logTag, "updateDownloadFailed: id=> $id")
-        downloadsDao.updateDownloadEnd(id, DownloadStatus.PAUSED.name, null, System.currentTimeMillis())
+        downloadsDao.updateDownloadEnd(id, DownloadStatus.FAILED.name, null, System.currentTimeMillis())
     }
 }
