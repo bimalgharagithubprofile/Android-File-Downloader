@@ -22,6 +22,8 @@ import com.bimalghara.filedownloader.notification.AppNotificationManager
 import com.bimalghara.filedownloader.notification.model.NotificationData
 import com.bimalghara.filedownloader.utils.*
 import com.bimalghara.filedownloader.utils.FileUtil.copyFileToUri
+import com.bimalghara.filedownloader.utils.FileUtil.toSize
+import com.bimalghara.filedownloader.utils.FunUtil.calculateETA
 import com.bimalghara.filedownloader.utils.FunUtil.toSpeed
 import com.bimalghara.filedownloader.utils.Logger.logs
 import dagger.hilt.android.AndroidEntryPoint
@@ -357,16 +359,21 @@ class DownloadService : Service() {
                     notificationManager?.showFileDownloadNotification(notificationData)
                 }
 
-                override fun onProgressUpdate(progress: Int, downloadId: Int, name: String, actionData: String) {
-                    logs(logTag, "onProgressUpdate: $progress, downloadId => $downloadId")
+                override fun onProgressUpdate(progress: Int, downloadId: Int, name: String, totalSize: Long, downloadedSize: Long) {
+                    logs(logTag, "onProgressUpdate: $progress, downloadId => $downloadId, totalSize => $totalSize, downloadedSize => $downloadedSize")
                     val downloadSpeed = (downloadRepository.networkStatusLive.value?.second ?: 0L).toSpeed()
+                    logs(logTag, "onProgressUpdate: downloadSpeed => $downloadSpeed")
+                    val eta = calculateETA((downloadRepository.networkStatusLive.value?.second ?: 0L), totalSize, downloadedSize)
+                    logs(logTag, "onProgressUpdate: eta => $eta")
+                    val actionData = "${downloadedSize.toSize()} of ${totalSize.toSize()}"
                     val notificationData = NotificationData(
                         id = downloadId,
                         status = NotificationStatus.IN_PROGRESS,
                         name = name,
                         actionData = actionData,
                         progress = progress,
-                        speed = downloadSpeed
+                        speed = downloadSpeed,
+                        eta = eta
                     )
                     notificationManager?.showFileDownloadNotification(notificationData)
                 }

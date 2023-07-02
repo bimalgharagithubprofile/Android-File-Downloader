@@ -202,8 +202,7 @@ class DownloadRepositoryImpl @Inject constructor(
                 if (totalBytes > 0) {
                     val currentProgress = fetchProgress(totalBytesRead, totalBytes)
                     if (currentProgress != previousProgress && currentProgress < 100) {
-                        val actionData = "${totalBytesRead.toSize()} of ${totalBytes.toSize()}"
-                        callback.onProgressUpdate(currentProgress, downloadEntity.id, downloadEntity.name, actionData)
+                        callback.onProgressUpdate(currentProgress, downloadEntity.id, downloadEntity.name, totalBytes, totalBytesRead)
                         previousProgress = currentProgress
                         lastProgress = currentProgress
                     }

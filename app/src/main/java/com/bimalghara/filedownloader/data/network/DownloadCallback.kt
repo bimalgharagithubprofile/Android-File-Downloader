@@ -5,7 +5,7 @@ interface DownloadCallback {
     fun onDownloadPaused(downloadId: Int, lastProgress:Int, name: String)
     fun onDownloadCancelled(downloadId: Int)
     fun onInfiniteProgressUpdate(downloadedData: String, downloadId: Int, name: String)
-    fun onProgressUpdate(progress: Int, downloadId: Int, name: String, actionData: String)
+    fun onProgressUpdate(progress: Int, downloadId: Int, name: String, totalSize: Long, downloadedSize: Long)
     fun onDownloadComplete(tmpPath: String, downloadId: Int)
     fun onDownloadFailed(errorMessage: String, downloadId: Int)
 }

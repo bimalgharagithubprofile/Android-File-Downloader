@@ -7,10 +7,10 @@ import android.os.Build
 import com.bimalghara.filedownloader.broadcast.LocalMessageSender
 import com.bimalghara.filedownloader.domain.model.FileDetails
 import com.bimalghara.filedownloader.service.DownloadService
+import com.bimalghara.filedownloader.utils.Logger.logs
 import kotlinx.coroutines.delay
 import okhttp3.Headers
 import java.net.URL
-import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -91,6 +91,21 @@ object FunUtil {
         val digitGroups = (Math.log10(this.toDouble()) / Math.log10(1024.0)).toInt()
 
         return String.format("%.1f %s", this / Math.pow(1024.0, digitGroups.toDouble()), units[digitGroups])
+    }
+
+    fun calculateETA(speed: Long, totalSize: Long, downloadedSize: Long): String {
+        val remainingBytes = totalSize - downloadedSize
+        val eta =  if (speed > 0) (remainingBytes / speed) else (-1)
+        logs("FunUtil", "onProgressUpdate -> calculateETA -> $eta")
+        return formatETA(eta)
+    }
+    private fun formatETA(eta: Long): String {
+        return when {
+            eta < 0 -> "N/A"
+            eta < 60 -> "$eta sec"
+            eta < 3600 -> "${eta / 60} min ${eta % 60} sec"
+            else -> "${eta / 3600} hr ${(eta % 3600) / 60} min"
+        }
     }
 
     fun fetchProgress(currentFileSize: Long, totalFileSize: Long): Int {

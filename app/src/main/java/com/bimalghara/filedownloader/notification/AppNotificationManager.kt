@@ -75,7 +75,8 @@ class AppNotificationManager(private val context: Context) {
                 R.id.progressIndicator_small, 100, notificationData.progress, notificationData.isIndeterminate
             )
 
-            setTextViewText(R.id.tv_notific_small_eta, "EE:EE Left")
+            if(notificationData.eta!=null)
+                setTextViewText(R.id.tv_notific_small_eta, notificationData.eta)
 
             if (notificationData.status == NotificationStatus.PAUSED) {
                 setViewVisibility(R.id.btn_notific_small_resume, View.VISIBLE)
@@ -106,7 +107,8 @@ class AppNotificationManager(private val context: Context) {
                 R.id.progressIndicator_small_old, 100, notificationData.progress, notificationData.isIndeterminate
             )
 
-            setTextViewText(R.id.tv_notific_small_old_eta, "EE:EE Left")
+            if(notificationData.eta!=null)
+                setTextViewText(R.id.tv_notific_small_old_eta, notificationData.eta)
 
             if (notificationData.status == NotificationStatus.PAUSED) {
                 setViewVisibility(R.id.btn_notific_small_old_resume, View.VISIBLE)
@@ -137,7 +139,9 @@ class AppNotificationManager(private val context: Context) {
                 R.id.progressIndicator_large, 100, notificationData.progress, notificationData.isIndeterminate
             )
 
-            setTextViewText(R.id.tv_notific_large_eta, "EE:EE Left")
+            if(notificationData.eta!=null)
+                setTextViewText(R.id.tv_notific_large_eta, notificationData.eta)
+
             setTextViewText(R.id.tv_notofic_name, notificationData.name)
             if(notificationData.actionData!=null){
                 setTextViewText(R.id.tv_notofic_action, notificationData.actionData)
