@@ -64,6 +64,7 @@ class DownloadRepositoryImpl @Inject constructor(
 
         downloadCallbacks[downloadEntity.id] = callback
         pauseFlags[downloadEntity.id] = AtomicBoolean(false)
+        pauseAllFlags.set(false)
         cancellationFlags[downloadEntity.id] = AtomicBoolean(false)
 
         downloadJobs[downloadEntity.id] = coroutineScope.launch {
@@ -180,10 +181,11 @@ class DownloadRepositoryImpl @Inject constructor(
         callback: DownloadCallback
     ) = withContext(dispatcherProviderSource.io) {
         var lastProgress = 0
-        try {
-            val tempFile = File(tmpPath)
-            val raf = RandomAccessFile(tempFile, "rw")
+        val tempFile = File(tmpPath)
+        val raf = RandomAccessFile(tempFile, "rw")
+        val inputStream = body.byteStream()
 
+        try {
             var fileLength = 0L
             var fileSeek = 0L
 
@@ -195,7 +197,6 @@ class DownloadRepositoryImpl @Inject constructor(
             raf.setLength(fileLength)
             raf.seek(fileSeek)
 
-            val inputStream = body.byteStream()
             val buffer = ByteArray(4096)
             var bytesRead: Int
             var totalBytesRead: Long = fileSeek
@@ -221,10 +222,6 @@ class DownloadRepositoryImpl @Inject constructor(
                 if(pauseAllFlags.get()){
                     logs(logTag, "Force pause all")
 
-                    raf.close()
-                    inputStream.close()
-                    body.close()
-
                     updateDownloadPaused(downloadEntity.id, lastProgress, InterruptedBy.USER)
                     callback.onDownloadPaused(downloadEntity.id, lastProgress, downloadEntity.name)
 
@@ -236,10 +233,6 @@ class DownloadRepositoryImpl @Inject constructor(
                 // paused
                 if (pauseFlags.containsKey(downloadEntity.id) && pauseFlags[downloadEntity.id]?.get() == true) {
                     logs(logTag, "Force pause")
-
-                    raf.close()
-                    inputStream.close()
-                    body.close()
 
                     updateDownloadPaused(downloadEntity.id, lastProgress, InterruptedBy.USER)
                     callback.onDownloadPaused(downloadEntity.id, lastProgress, downloadEntity.name)
@@ -253,27 +246,21 @@ class DownloadRepositoryImpl @Inject constructor(
                 if (cancellationFlags.containsKey(downloadEntity.id) && cancellationFlags[downloadEntity.id]?.get() == true) {
                     logs(logTag, "Force cancel")
 
-                    raf.close()
-                    inputStream.close()
-                    body.close()
-
-                    if (tempFile.exists()) tempFile.delete()
                     updateDownloadCanceled(downloadEntity.id)
                     callback.onDownloadCancelled(downloadEntity.id)
 
                     cancelJob(downloadEntity.id)
                     removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_CANCEL)
 
+                    if (tempFile.exists()) tempFile.delete()
+
                     return@withContext
                 }
             }
 
-            raf.close()
-            inputStream.close()
-            body.close()
-            //removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_CANCEL)
-            //updateDownloadCompleted(downloadEntity.id)
-            //callback.onDownloadComplete(tmpPath, downloadEntity.id)
+            removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_CANCEL)
+            updateDownloadCompleted(downloadEntity.id)
+            callback.onDownloadComplete(tmpPath, downloadEntity.id)
         } catch (e: IOException) {
             delay(100)
             if (networkStatusLive.value?.first != NetworkConnectivity.Status.WIFI || networkStatusLive.value?.first != NetworkConnectivity.Status.CELLULAR) {
@@ -286,6 +273,15 @@ class DownloadRepositoryImpl @Inject constructor(
                 updateDownloadFailed(downloadEntity.id)
                 callback.onDownloadFailed("Failed to write the file to disk: ${e.message} [${networkStatusLive.value}]", downloadEntity.id)
                 removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_CANCEL)
+            }
+        } finally {
+            logs(logTag, "Finally -> Closing -> write the file to disk: ${downloadEntity.id}")
+            try {
+                raf.close()
+                inputStream.close()
+                body.close()
+            }catch (ce: IOException){
+                logs(logTag, "Finally -> Closing -> failed: [${downloadEntity.id}] :: ${ce.message}")
             }
         }
     }

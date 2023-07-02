@@ -144,7 +144,7 @@ class DownloadService : Service() {
         }
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         logs(logTag, "Download Service startId => $startId")
 
         return START_STICKY
