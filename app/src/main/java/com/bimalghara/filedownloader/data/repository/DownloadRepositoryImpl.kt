@@ -38,6 +38,7 @@ class DownloadRepositoryImpl @Inject constructor(
     private val downloadCalls = mutableMapOf<Int, Call<ResponseBody>>()
     private val downloadCallbacks = mutableMapOf<Int, DownloadCallback>()
     private val pauseFlags = mutableMapOf<Int, AtomicBoolean>()
+    private val pauseAllFlags = AtomicBoolean(false)
     private val cancellationFlags = mutableMapOf<Int, AtomicBoolean>()
 
     val networkStatusLive = MutableLiveData(Pair(NetworkConnectivity.Status.Unavailable, 0L))
@@ -142,6 +143,12 @@ class DownloadRepositoryImpl @Inject constructor(
         pauseFlag?.set(true)
     }
 
+    fun pauseAllDownload() {
+        logs(logTag, "pausing All Download")
+
+        pauseAllFlags.set(true)
+    }
+
     fun cancelDownload(downloadId: Int) {
         logs(logTag, "canceling Download: $downloadId")
 
@@ -210,6 +217,22 @@ class DownloadRepositoryImpl @Inject constructor(
                     callback.onInfiniteProgressUpdate(totalBytesRead.toSize(), downloadEntity.id, downloadEntity.name)
                 }
 
+                // paused all
+                if(pauseAllFlags.get()){
+                    logs(logTag, "Force pause all")
+
+                    raf.close()
+                    inputStream.close()
+                    body.close()
+
+                    updateDownloadPaused(downloadEntity.id, lastProgress, InterruptedBy.USER)
+                    callback.onDownloadPaused(downloadEntity.id, lastProgress, downloadEntity.name)
+
+                    cancelJob(downloadEntity.id)
+                    removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_PAUSE)
+
+                    return@withContext
+                }
                 // paused
                 if (pauseFlags.containsKey(downloadEntity.id) && pauseFlags[downloadEntity.id]?.get() == true) {
                     logs(logTag, "Force pause")

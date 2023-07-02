@@ -14,6 +14,7 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bimalghara.filedownloader.R
+import com.bimalghara.filedownloader.broadcast.LocalMessageSender
 import com.bimalghara.filedownloader.databinding.ActivityMainBinding
 import com.bimalghara.filedownloader.domain.model.FileDetails
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
@@ -233,6 +234,7 @@ class MainActivity : BaseActivity() {
         popupMenu.setOnMenuItemClickListener {
             when(it.itemId) {
                 R.id.action_pause_all -> {
+                    LocalMessageSender(this).sendMessage(action = NotificationAction.DOWNLOAD_PAUSE_ALL.name)
                     true
                 }
                 R.id.action_resume_all -> {

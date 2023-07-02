@@ -14,6 +14,7 @@ import com.bimalghara.filedownloader.utils.DownloadStatus
 import com.bimalghara.filedownloader.utils.FileUtil.getMimeType
 import com.bimalghara.filedownloader.utils.FunUtil.createFileDetailsFromHeaders
 import com.bimalghara.filedownloader.utils.FunUtil.wakeUpDownloadService
+import com.bimalghara.filedownloader.utils.NotificationAction
 import com.bimalghara.filedownloader.utils.ResourceWrapper
 import com.bimalghara.filedownloader.utils.getStringFromResource
 import kotlinx.coroutines.flow.Flow
@@ -64,7 +65,7 @@ class FileRepositoryImpl @Inject constructor(
             }
 
             //start service
-            wakeUpDownloadService(appContext, action = "DOWNLOAD_START")
+            wakeUpDownloadService(appContext, action = NotificationAction.DOWNLOAD_START.name)
 
             return ResourceWrapper.Success(data = true)
 

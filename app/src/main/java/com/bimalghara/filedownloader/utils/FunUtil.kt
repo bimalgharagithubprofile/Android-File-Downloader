@@ -115,7 +115,6 @@ object FunUtil {
         appContext.connectDownloadService()
         delay(2000)
         LocalMessageSender(appContext).sendMessage(action = action)
-
     }
 
     private fun Context.connectDownloadService(){

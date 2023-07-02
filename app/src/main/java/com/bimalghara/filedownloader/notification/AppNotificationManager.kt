@@ -14,62 +14,65 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.notification.model.NotificationData
-import com.bimalghara.filedownloader.utils.Logger.logs
 import com.bimalghara.filedownloader.utils.NotificationAction
 import com.bimalghara.filedownloader.utils.NotificationStatus
+import java.lang.ref.WeakReference
 
-class AppNotificationManager(private val context: Context) {
+object AppNotificationManager {
+    private const val CHANNEL_FILE_DOWNLOAD = "file_download_channel"
+    private var notificationManager: NotificationManager? = null
+    private var appContext: WeakReference<Context>? = null
 
-    companion object {
-        const val CHANNEL_FILE_DOWNLOAD = "file_download_channel"
-    }
-
-    var notificationManager: NotificationManager? = null
-
-    init {
+    fun from(context: Context) : AppNotificationManager {
+        this.appContext = WeakReference(context)
         createNotificationChannels()
+
+        return this
     }
 
     private fun createNotificationChannels() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        appContext?.get()?.let { context ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-            val fileDownloadChannel = NotificationChannel(
-                CHANNEL_FILE_DOWNLOAD,
-                "File Download",
-                NotificationManager.IMPORTANCE_LOW
-            )
+                val fileDownloadChannel = NotificationChannel(
+                    CHANNEL_FILE_DOWNLOAD,
+                    "File Download",
+                    NotificationManager.IMPORTANCE_LOW
+                )
 
-            fileDownloadChannel.lightColor = Color.GREEN
-            fileDownloadChannel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                fileDownloadChannel.lightColor = Color.GREEN
+                fileDownloadChannel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
 
-            notificationManager?.createNotificationChannel(fileDownloadChannel)
+                notificationManager?.createNotificationChannel(fileDownloadChannel)
+            }
         }
     }
 
     fun showFileDownloadNotification(notificationData: NotificationData) {
+        appContext?.get()?.let { context ->
+            val notificationLayoutSmall =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    createRemoteViewsSmall(context, notificationData)
+                } else {
+                    createRemoteViewsSmallOld(context, notificationData)
+                }
+            val notificationLayoutSmallLarge = createRemoteViewsLarge(context, notificationData)
 
-        val notificationLayoutSmall =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                createRemoteViewsSmall(notificationData)
-            } else {
-                createRemoteViewsSmallOld(notificationData)
-            }
-        val notificationLayoutSmallLarge = createRemoteViewsLarge(notificationData)
+            val builder = NotificationCompat.Builder(context, CHANNEL_FILE_DOWNLOAD)
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setOngoing(true)
+                .setCustomContentView(notificationLayoutSmall)
+                .setCustomBigContentView(notificationLayoutSmallLarge)
+                .build()
 
-        val builder = NotificationCompat.Builder(context, CHANNEL_FILE_DOWNLOAD)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setOngoing(true)
-            .setCustomContentView(notificationLayoutSmall)
-            .setCustomBigContentView(notificationLayoutSmallLarge)
-            .build()
-
-        val notificationManager = NotificationManagerCompat.from(context)
-        notificationManager.notify(notificationData.id, builder)
+            val notificationManager = NotificationManagerCompat.from(context)
+            notificationManager.notify(notificationData.id, builder)
+        }
     }
 
-    private fun createRemoteViewsSmall(notificationData: NotificationData): RemoteViews {
+    private fun createRemoteViewsSmall(context: Context, notificationData: NotificationData): RemoteViews {
         return  RemoteViews(context.packageName, R.layout.notification_layout_small).apply {
             setProgressBar(
                 R.id.progressIndicator_small, 100, notificationData.progress, notificationData.isIndeterminate
@@ -81,7 +84,7 @@ class AppNotificationManager(private val context: Context) {
         }
     }
 
-    private fun createRemoteViewsSmallOld(notificationData: NotificationData): RemoteViews {
+    private fun createRemoteViewsSmallOld(context: Context, notificationData: NotificationData): RemoteViews {
         return  RemoteViews(context.packageName, R.layout.notification_layout_small_old).apply {
             setProgressBar(
                 R.id.progressIndicator_small_old, 100, notificationData.progress, notificationData.isIndeterminate
@@ -93,7 +96,7 @@ class AppNotificationManager(private val context: Context) {
         }
     }
 
-    private fun createRemoteViewsLarge(notificationData: NotificationData): RemoteViews {
+    private fun createRemoteViewsLarge(context: Context, notificationData: NotificationData): RemoteViews {
         return  RemoteViews(context.packageName, R.layout.notification_layout_large).apply {
             setProgressBar(
                 R.id.progressIndicator_large, 100, notificationData.progress, notificationData.isIndeterminate
@@ -142,15 +145,28 @@ class AppNotificationManager(private val context: Context) {
     }
 
     private fun getPendingIntent(action: String, notificationId: Int): PendingIntent? {
-        val intent = Intent(context, NotificationActionReceiver::class.java)
-        intent.action = action
-        intent.putExtra("DOWNLOAD_ID", notificationId)
+        if(appContext?.get() != null ) {
+            val intent = Intent(appContext!!.get()!!, NotificationActionReceiver::class.java)
+            intent.action = action
+            intent.putExtra("DOWNLOAD_ID", notificationId)
 
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            PendingIntent.getBroadcast(context, notificationId, intent, PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        } else {
-            PendingIntent.getBroadcast(context, notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PendingIntent.getBroadcast(
+                    appContext!!.get()!!,
+                    notificationId,
+                    intent,
+                    PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                )
+            } else {
+                PendingIntent.getBroadcast(
+                    appContext!!.get()!!,
+                    notificationId,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                )
+            }
         }
+        return null
     }
 
     fun cancelAllNotifications(){
@@ -161,3 +177,4 @@ class AppNotificationManager(private val context: Context) {
         notificationManager?.cancel(notificationId)
     }
 }
+

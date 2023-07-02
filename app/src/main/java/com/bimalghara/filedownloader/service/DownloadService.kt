@@ -43,7 +43,7 @@ class DownloadService : Service() {
     @Inject
     lateinit var networkConnectivity: NetworkConnectivity
 
-    private var notificationManager: AppNotificationManager? = null
+    private var notificationManager = AppNotificationManager
 
     private var fileCacheDir:File?=null
 
@@ -57,7 +57,7 @@ class DownloadService : Service() {
             val data = intent?.getStringExtra("action")
             if (data != null) {
                 when (data) {
-                    "DOWNLOAD_START" -> {
+                    NotificationAction.DOWNLOAD_START.name -> {
                         logs(logTag, "DOWNLOAD_START")
                         actionDownload(PopType.START.name)
                     }
@@ -75,38 +75,16 @@ class DownloadService : Service() {
                             actionPause(downloadId)
                         } else logs(logTag, "onReceive: DOWNLOAD_PAUSE => DOWNLOAD_ID INVALID")
                     }
+                    NotificationAction.DOWNLOAD_PAUSE_ALL.name -> {
+                        logs(logTag, "DOWNLOAD_PAUSE_ALL")
+                        actionPauseAll()
+                    }
                     NotificationAction.DOWNLOAD_CANCEL.name -> {
                         val downloadId = intent.getIntExtra("DOWNLOAD_ID", -1)
                         if (downloadId != -1) {
                             actionCancel(downloadId)
                         } else logs(logTag, "onReceive: DOWNLOAD_PAUSE => DOWNLOAD_ID INVALID")
                     }
-                    /*"STOP_ALL" -> {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            stopForeground(STOP_FOREGROUND_REMOVE)
-                        }
-
-                        //pause ongoing download
-                        actionPauseDownload(null)
-
-                        Handler(Looper.myLooper()!!).postDelayed({
-
-                            //delete the temp file so that the process starts from beginning
-                            if (tempFilePath != null) {
-                                val tempFile = File(tempFilePath!!)
-                                if (tempFile.exists()) {
-                                    tempFile.delete()
-                                }
-                            }
-
-                            //cancel notification
-                            notificationManager?.cancelAllNotifications()
-
-                            //stop all other processes
-                            stopSelf()
-
-                        }, 700)
-                    }*/
                 }
             }
         }
@@ -122,7 +100,7 @@ class DownloadService : Service() {
 
         fileCacheDir = File(noBackupFilesDir?.path + "/downloads")
 
-        notificationManager = AppNotificationManager(this)
+        notificationManager = AppNotificationManager.from(this)
 
         val filter = IntentFilter("${baseContext?.packageName}.NOTIFICATION_BROAD_CAST")
         LocalBroadcastManager.getInstance(this).registerReceiver(receiver, filter)
@@ -284,6 +262,9 @@ class DownloadService : Service() {
     }
     private fun actionPause(downloadId: Int) = coroutineScope.launch {
         downloadRepository.pauseDownload(downloadId)
+    }
+    private fun actionPauseAll() = coroutineScope.launch {
+        downloadRepository.pauseAllDownload()
     }
     private fun actionCancel(downloadId: Int) = coroutineScope.launch {
         downloadRepository.cancelDownload(downloadId)
