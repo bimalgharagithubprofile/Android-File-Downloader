@@ -78,26 +78,6 @@ class AppNotificationManager(private val context: Context) {
             if(notificationData.eta!=null)
                 setTextViewText(R.id.tv_notific_small_eta, notificationData.eta)
 
-            if (notificationData.status == NotificationStatus.PAUSED) {
-                setViewVisibility(R.id.btn_notific_small_resume, View.VISIBLE)
-                setViewVisibility(R.id.btn_notific_small_pause, View.GONE)
-            } else {
-                setViewVisibility(R.id.btn_notific_small_resume, View.GONE)
-                setViewVisibility(R.id.btn_notific_small_pause, View.VISIBLE)
-            }
-            logs("CCCCC", "RemoteView did:${notificationData.id}")
-            setOnClickPendingIntent(
-                R.id.btn_notific_small_resume,
-                getPendingIntent(NotificationAction.DOWNLOAD_RESUME.name, notificationData.id)
-            )
-            setOnClickPendingIntent(
-                R.id.btn_notific_small_pause,
-                getPendingIntent(NotificationAction.DOWNLOAD_PAUSE.name, notificationData.id)
-            )
-            setOnClickPendingIntent(
-                R.id.btn_notific_small_cancel,
-                getPendingIntent(NotificationAction.DOWNLOAD_CANCEL.name, notificationData.id)
-            )
         }
     }
 
@@ -110,26 +90,6 @@ class AppNotificationManager(private val context: Context) {
             if(notificationData.eta!=null)
                 setTextViewText(R.id.tv_notific_small_old_eta, notificationData.eta)
 
-            if (notificationData.status == NotificationStatus.PAUSED) {
-                setViewVisibility(R.id.btn_notific_small_old_resume, View.VISIBLE)
-                setViewVisibility(R.id.btn_notific_small_old_pause, View.GONE)
-            } else {
-                setViewVisibility(R.id.btn_notific_small_old_resume, View.GONE)
-                setViewVisibility(R.id.btn_notific_small_old_pause, View.VISIBLE)
-            }
-
-            setOnClickPendingIntent(
-                R.id.btn_notific_small_old_resume,
-                getPendingIntent(NotificationAction.DOWNLOAD_RESUME.name, notificationData.id)
-            )
-            setOnClickPendingIntent(
-                R.id.btn_notific_small_old_pause,
-                getPendingIntent(NotificationAction.DOWNLOAD_PAUSE.name, notificationData.id)
-            )
-            setOnClickPendingIntent(
-                R.id.btn_notific_small_old_cancel,
-                getPendingIntent(NotificationAction.DOWNLOAD_CANCEL.name, notificationData.id)
-            )
         }
     }
 

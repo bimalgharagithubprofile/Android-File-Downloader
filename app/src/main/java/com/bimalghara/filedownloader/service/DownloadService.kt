@@ -373,7 +373,7 @@ class DownloadService : Service() {
                         actionData = actionData,
                         progress = progress,
                         speed = downloadSpeed,
-                        eta = eta
+                        eta = "$eta Left"
                     )
                     notificationManager?.showFileDownloadNotification(notificationData)
                 }

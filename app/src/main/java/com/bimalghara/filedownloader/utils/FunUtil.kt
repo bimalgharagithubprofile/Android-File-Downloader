@@ -96,7 +96,6 @@ object FunUtil {
     fun calculateETA(speed: Long, totalSize: Long, downloadedSize: Long): String {
         val remainingBytes = totalSize - downloadedSize
         val eta =  if (speed > 0) (remainingBytes / speed) else (-1)
-        logs("FunUtil", "onProgressUpdate -> calculateETA -> $eta")
         return formatETA(eta)
     }
     private fun formatETA(eta: Long): String {
