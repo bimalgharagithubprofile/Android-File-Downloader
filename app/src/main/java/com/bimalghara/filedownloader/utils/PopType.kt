@@ -5,4 +5,5 @@ enum class PopType {
     START,
     RESUME_USER,
     RESUME_WIFI,
+    RESUME_ALL,
 }

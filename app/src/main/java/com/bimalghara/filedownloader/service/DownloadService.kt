@@ -68,6 +68,10 @@ class DownloadService : Service() {
                             actionResume(downloadId)
                         }
                     }
+                    NotificationAction.DOWNLOAD_RESUME_ALL.name -> {
+                        logs(logTag, "DOWNLOAD_RESUME_ALL")
+                        actionDownload(PopType.RESUME_ALL.name)
+                    }
                     NotificationAction.DOWNLOAD_PAUSE.name -> {
                         logs(logTag, "DOWNLOAD_PAUSE")
                         val downloadId = intent.getIntExtra("DOWNLOAD_ID", -1)
@@ -159,8 +163,8 @@ class DownloadService : Service() {
         job.cancel()
     }
 
-    private fun actionDownload(type: String) = coroutineScope.launch {
-        logs(logTag, "action Download [$type]")
+    private fun actionDownload(action: String) = coroutineScope.launch {
+        logs(logTag, "action Download [$action]")
         try {
             val settingParallelDownload =
                 dataStore.getString(DS_KEY_SETTING_PARALLEL_DOWNLOAD)?.toInt()
@@ -178,33 +182,103 @@ class DownloadService : Service() {
             var waitingQueuedItems = groupedQueuedItems[DownloadStatus.WAITING.name] ?: emptyList()
 
             val groupedPausedQueuedItems = pausedQueuedItems.groupBy { it.interruptedBy }
-            var interruptedNoWiFiItems = groupedPausedQueuedItems[InterruptedBy.NO_WIFI.name] ?: emptyList()
+            var userInterruptedItems = groupedPausedQueuedItems[InterruptedBy.USER.name] ?: emptyList()
+            var wifiInterruptedItems = groupedPausedQueuedItems[InterruptedBy.NO_WIFI.name] ?: emptyList()
 
-            //slot full -> all downloading
-            val totInProgress = downloadingQueuedItems.size.plus(pausedQueuedItems.size)
-            if (totInProgress >= settingParallelDownload) {
-                logs(logTag, "slot-available: 0 Downloading: ${downloadingQueuedItems.size} Paused: ${pausedQueuedItems.size}")
-                return@launch
-            } else {
-                availableParallelDownload = availableParallelDownload.minus(totInProgress)
-                if(availableParallelDownload<0) availableParallelDownload=0
-                logs(logTag, "slot-available: $availableParallelDownload already downloading: ${downloadingQueuedItems.size} already paused: ${pausedQueuedItems.size}")
-            }
-
-            when(type) {
+            when(action) {
                 PopType.RESUME_WIFI.name -> {
+                    //slot -> all in-progress [downloading]
+                    if (downloadingQueuedItems.size >= settingParallelDownload) {
+                        logs(logTag, "slot-available: 0 Downloading: ${downloadingQueuedItems.size}")
+                        return@launch
+                    } else {
+                        availableParallelDownload = availableParallelDownload.minus(downloadingQueuedItems.size)
+                        if(availableParallelDownload<0) availableParallelDownload=0
+                        logs(logTag, "slot-available: $availableParallelDownload already downloading: ${downloadingQueuedItems.size}")
+                    }
+
                     if(downloadRepository.networkStatusLive.value?.first == NetworkConnectivity.Status.WIFI){
-                        interruptedNoWiFiItems = interruptedNoWiFiItems.sortedByDescending { it.updatedAt }
-                        for(interruptedNoWiFiItem in interruptedNoWiFiItems){
-                            if(interruptedNoWiFiItem.wifiOnly) {
-                                downloadFileFromNetwork(this@DownloadService, interruptedNoWiFiItem)
-                            } else
-                                logs(logTag, "resume: wifi: Failed [not selected only over WiFi]")
+                        //slot available
+                        var allowResumeWifi = 0
+                        if(wifiInterruptedItems.size >= availableParallelDownload){
+                            allowResumeWifi = availableParallelDownload
+                            availableParallelDownload = 0
+                            logs(logTag, "slot-available: 0 waiting for Wifi: $availableParallelDownload")
+                        } else {
+                            allowResumeWifi = wifiInterruptedItems.size
+                            availableParallelDownload = availableParallelDownload.minus(wifiInterruptedItems.size)
+                            logs(logTag, "slot-available: $availableParallelDownload waiting for wifi: ${wifiInterruptedItems.size}")
+                        }
+                        logs(logTag, "resume wifi: $allowResumeWifi")
+
+                        // start all waiting for wifi form queue as per slot
+                        wifiInterruptedItems = wifiInterruptedItems.sortedByDescending { it.updatedAt }
+                        for (rw in 0 until allowResumeWifi){
+                            val item = wifiInterruptedItems[rw]
+                            downloadFileFromNetwork(this@DownloadService, item)
                         }
                     } else logs(logTag, "resume: wifi: Failed - no wifi [${downloadRepository.networkStatusLive.value?.first}]")
                 }
+                PopType.RESUME_ALL.name -> {
+                    //slot -> all in-progress [downloading/waiting-for-wifi]
+                    val totInProgress = downloadingQueuedItems.size.plus(wifiInterruptedItems.size)
+                    if (totInProgress >= settingParallelDownload) {
+                        logs(logTag, "slot-available: 0 Downloading: ${downloadingQueuedItems.size} waiting-for-wifi: ${wifiInterruptedItems.size}")
+                        return@launch
+                    } else {
+                        availableParallelDownload = availableParallelDownload.minus(totInProgress)
+                        if(availableParallelDownload<0) availableParallelDownload=0
+                        logs(logTag, "slot-available: $availableParallelDownload already downloading: ${downloadingQueuedItems.size} already waiting-for-wifi: ${wifiInterruptedItems.size}")
+                    }
+
+                    //slot full -> total in-progress
+                    if(availableParallelDownload <= 0) {
+                        return@launch
+                    }
+
+                    //slot available
+                    var allowResumeALl = 0
+                    if(userInterruptedItems.size >= availableParallelDownload){
+                        allowResumeALl = availableParallelDownload
+                        availableParallelDownload = 0
+                        logs(logTag, "slot-available: 0 resume all: $availableParallelDownload")
+                    } else {
+                        allowResumeALl = userInterruptedItems.size
+                        availableParallelDownload = availableParallelDownload.minus(userInterruptedItems.size)
+                        logs(logTag, "slot-available: $availableParallelDownload resume all: ${userInterruptedItems.size}")
+                    }
+                    logs(logTag, "resume: all: $allowResumeALl")
+
+                    // resume all form queue as per slot
+                    userInterruptedItems = userInterruptedItems.sortedByDescending { it.updatedAt }
+                    for (n in 0 until allowResumeALl){
+                        val item = userInterruptedItems[n]
+                        if(item.wifiOnly){
+                            if(downloadRepository.networkStatusLive.value?.first == NetworkConnectivity.Status.WIFI)
+                                downloadFileFromNetwork(this@DownloadService, item)
+                            else
+                                logs(logTag, "resume: all: Failed [selected only over WiFi and WiFi not available at this moment]")
+                        } else {
+                            if(downloadRepository.networkStatusLive.value?.first == NetworkConnectivity.Status.WIFI || downloadRepository.networkStatusLive.value?.first == NetworkConnectivity.Status.CELLULAR)
+                                downloadFileFromNetwork(this@DownloadService, item)
+                            else
+                                logs(logTag, "resume: all: Failed [both WiFi and Cellular not available at this moment]")
+                        }
+                    }
+                }
                 PopType.START.name -> {
-                    //slot full -> downloading & resumed waiting for wifi
+                    //slot -> all in-progress [downloading/waiting-for-wifi]
+                    val totInProgress = downloadingQueuedItems.size.plus(wifiInterruptedItems.size)
+                    if (totInProgress >= settingParallelDownload) {
+                        logs(logTag, "slot-available: 0 Downloading: ${downloadingQueuedItems.size} waiting-for-wifi: ${wifiInterruptedItems.size}")
+                        return@launch
+                    } else {
+                        availableParallelDownload = availableParallelDownload.minus(totInProgress)
+                        if(availableParallelDownload<0) availableParallelDownload=0
+                        logs(logTag, "slot-available: $availableParallelDownload already downloading: ${downloadingQueuedItems.size} already waiting-for-wifi: ${wifiInterruptedItems.size}")
+                    }
+
+                    //slot full -> total in-progress
                     if(availableParallelDownload <= 0) {
                         return@launch
                     }

@@ -238,6 +238,7 @@ class MainActivity : BaseActivity() {
                     true
                 }
                 R.id.action_resume_all -> {
+                    LocalMessageSender(this).sendMessage(action = NotificationAction.DOWNLOAD_RESUME_ALL.name)
                     true
                 }
                 R.id.action_settings -> {
