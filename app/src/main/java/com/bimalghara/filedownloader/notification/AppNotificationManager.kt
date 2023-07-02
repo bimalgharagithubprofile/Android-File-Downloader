@@ -64,9 +64,9 @@ class AppNotificationManager(private val context: Context) {
     }
 
     private fun createRemoteViewsSmall(notificationData: NotificationData): RemoteViews {
-        val notificationLayout = RemoteViews(context.packageName, R.layout.notification_layout_small).apply {
+        return  RemoteViews(context.packageName, R.layout.notification_layout_small).apply {
             setProgressBar(
-                R.id.progressIndicator, 100, notificationData.progress, notificationData.isIndeterminate
+                R.id.progressIndicator_small, 100, notificationData.progress, notificationData.isIndeterminate
             )
 
             setTextViewText(R.id.tv_notific_small_eta, "EE:EE Left")
@@ -92,47 +92,52 @@ class AppNotificationManager(private val context: Context) {
                 getPendingIntent(NotificationAction.DOWNLOAD_CANCEL.name, notificationData.id)
             )
         }
-
-        /*notificationLayout.setProgressBar(
-            R.id.progressIndicator, 100, notificationData.progress, notificationData.isIndeterminate
-        )
-
-        notificationLayout.setTextViewText(R.id.tvETA, "EE:EE Left")
-
-        if (notificationData.status == NotificationStatus.PAUSED) {
-            notificationLayout.setViewVisibility(R.id.btn_notific_small_resume, View.VISIBLE)
-            notificationLayout.setViewVisibility(R.id.btn_notific_small_pause, View.GONE)
-        } else {
-            notificationLayout.setViewVisibility(R.id.btn_notific_small_resume, View.GONE)
-            notificationLayout.setViewVisibility(R.id.btn_notific_small_pause, View.VISIBLE)
-        }
-
-        notificationLayout.setOnClickPendingIntent(
-            R.id.btn_notific_small_resume,
-            getPendingIntent(NotificationAction.DOWNLOAD_RESUME.name, notificationData.id)
-        )
-
-        notificationLayout.setOnClickPendingIntent(
-            R.id.btn_notific_small_pause,
-            getPendingIntent(NotificationAction.DOWNLOAD_PAUSE.name, notificationData.id)
-        )
-
-        notificationLayout.setOnClickPendingIntent(
-            R.id.btn_notific_small_cancel,
-            getPendingIntent(NotificationAction.DOWNLOAD_CANCEL.name, notificationData.id)
-        )*/
-
-        return notificationLayout
     }
 
     private fun createRemoteViewsLarge(notificationData: NotificationData): RemoteViews {
-        val notificationLayout = RemoteViews(context.packageName, R.layout.notification_layout_large)
+        return  RemoteViews(context.packageName, R.layout.notification_layout_large).apply {
+            setProgressBar(
+                R.id.progressIndicator_large, 100, notificationData.progress, notificationData.isIndeterminate
+            )
 
-        notificationLayout.setProgressBar(
-            R.id.progressIndicator, 100, notificationData.progress, notificationData.isIndeterminate
-        )
+            setTextViewText(R.id.tv_notific_large_eta, "EE:EE Left")
+            setTextViewText(R.id.tv_notofic_name, notificationData.name)
+            if(notificationData.actionData!=null){
+                setTextViewText(R.id.tv_notofic_action, notificationData.actionData)
+                setViewVisibility(R.id.tv_notofic_action, View.VISIBLE)
+            } else {
+                setViewVisibility(R.id.tv_notofic_action, View.GONE)
+            }
+            if(notificationData.speed!=null){
+                setTextViewText(R.id.tv_notofic_speed, notificationData.speed)
+                setViewVisibility(R.id.tv_notofic_speed, View.VISIBLE)
+                setViewVisibility(R.id.iv_notofic_separator, View.VISIBLE)
+            } else {
+                setViewVisibility(R.id.tv_notofic_speed, View.GONE)
+                setViewVisibility(R.id.iv_notofic_separator, View.GONE)
+            }
 
-        return notificationLayout
+            if (notificationData.status == NotificationStatus.PAUSED) {
+                setViewVisibility(R.id.btn_notific_large_resume, View.VISIBLE)
+                setViewVisibility(R.id.btn_notific_large_pause, View.GONE)
+            } else {
+                setViewVisibility(R.id.btn_notific_large_resume, View.GONE)
+                setViewVisibility(R.id.btn_notific_large_pause, View.VISIBLE)
+            }
+
+            setOnClickPendingIntent(
+                R.id.btn_notific_large_resume,
+                getPendingIntent(NotificationAction.DOWNLOAD_RESUME.name, notificationData.id)
+            )
+            setOnClickPendingIntent(
+                R.id.btn_notific_large_pause,
+                getPendingIntent(NotificationAction.DOWNLOAD_PAUSE.name, notificationData.id)
+            )
+            setOnClickPendingIntent(
+                R.id.btn_notific_large_cancel,
+                getPendingIntent(NotificationAction.DOWNLOAD_CANCEL.name, notificationData.id)
+            )
+        }
     }
 
     private fun getPendingIntent(action: String, notificationId: Int): PendingIntent? {
