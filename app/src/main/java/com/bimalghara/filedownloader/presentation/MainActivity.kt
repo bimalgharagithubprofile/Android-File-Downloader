@@ -122,6 +122,7 @@ class MainActivity : BaseActivity() {
         }
 
         binding.btnAddNew.setOnClickListener {
+            binding.root.hideKeyboard()
             setAddNew()
             bottomSheetAddNew?.state = BottomSheetBehavior.STATE_EXPANDED
         }

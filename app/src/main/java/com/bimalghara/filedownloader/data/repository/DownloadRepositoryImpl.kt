@@ -138,8 +138,8 @@ class DownloadRepositoryImpl @Inject constructor(
     fun pauseDownload(downloadId: Int) {
         logs(logTag, "pausing Download: $downloadId")
 
-        val pauseFlags = pauseFlags[downloadId]
-        pauseFlags?.set(true)
+        val pauseFlag = pauseFlags[downloadId]
+        pauseFlag?.set(true)
     }
 
     fun cancelDownload(downloadId: Int) {
@@ -148,7 +148,7 @@ class DownloadRepositoryImpl @Inject constructor(
         //check if already paused | if yes -> cancel right away
         val pauseFlags = pauseFlags[downloadId]
         if(pauseFlags == null){
-            logs(logTag, "canceling Download case: paused")
+            logs(logTag, "canceling Download case: already paused")
             val callback = downloadCallbacks[downloadId]
 
             //eeeeee
@@ -251,9 +251,9 @@ class DownloadRepositoryImpl @Inject constructor(
             raf.close()
             inputStream.close()
             body.close()
-            removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_PAUSE)
-            updateDownloadCompleted(downloadEntity.id)
-            callback.onDownloadComplete(tmpPath, downloadEntity.id)
+            //removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_CANCEL)
+            //updateDownloadCompleted(downloadEntity.id)
+            //callback.onDownloadComplete(tmpPath, downloadEntity.id)
         } catch (e: IOException) {
             delay(100)
             if (networkStatusLive.value?.first != NetworkConnectivity.Status.WIFI || networkStatusLive.value?.first != NetworkConnectivity.Status.CELLULAR) {

@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.notification.model.NotificationData
+import com.bimalghara.filedownloader.utils.Logger.logs
 import com.bimalghara.filedownloader.utils.NotificationAction
 import com.bimalghara.filedownloader.utils.NotificationStatus
 
@@ -83,7 +84,7 @@ class AppNotificationManager(private val context: Context) {
                 setViewVisibility(R.id.btn_notific_small_resume, View.GONE)
                 setViewVisibility(R.id.btn_notific_small_pause, View.VISIBLE)
             }
-
+            logs("CCCCC", "RemoteView did:${notificationData.id}")
             setOnClickPendingIntent(
                 R.id.btn_notific_small_resume,
                 getPendingIntent(NotificationAction.DOWNLOAD_RESUME.name, notificationData.id)
@@ -182,9 +183,9 @@ class AppNotificationManager(private val context: Context) {
         intent.putExtra("DOWNLOAD_ID", notificationId)
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_MUTABLE)
+            PendingIntent.getBroadcast(context, notificationId, intent, PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         } else {
-            PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+            PendingIntent.getBroadcast(context, notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT)
         }
     }
 

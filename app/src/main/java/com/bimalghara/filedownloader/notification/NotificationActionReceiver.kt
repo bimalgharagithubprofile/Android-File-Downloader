@@ -21,6 +21,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
             ) {
 
                 val downloadId = intent.getIntExtra("DOWNLOAD_ID", -1)
+                logs(TAG,"NotificationActionReceiver onReceive $downloadId[${intent.action!!}]")
                 if(downloadId != -1) {
                     LocalMessageSender(context).sendMessage(intent.action!!, downloadId)
                 } else logs(TAG,"download id not found from pendingIntent action!")
