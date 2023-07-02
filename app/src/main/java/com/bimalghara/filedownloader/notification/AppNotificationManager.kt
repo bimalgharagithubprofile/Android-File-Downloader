@@ -48,11 +48,16 @@ class AppNotificationManager(private val context: Context) {
 
     fun showFileDownloadNotification(notificationData: NotificationData) {
 
-        val notificationLayoutSmall = createRemoteViewsSmall(notificationData)
+        val notificationLayoutSmall =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                createRemoteViewsSmall(notificationData)
+            } else {
+                createRemoteViewsSmallOld(notificationData)
+            }
         val notificationLayoutSmallLarge = createRemoteViewsLarge(notificationData)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_FILE_DOWNLOAD)
-            .setSmallIcon(R.drawable.logo)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setCustomContentView(notificationLayoutSmall)
@@ -89,6 +94,37 @@ class AppNotificationManager(private val context: Context) {
             )
             setOnClickPendingIntent(
                 R.id.btn_notific_small_cancel,
+                getPendingIntent(NotificationAction.DOWNLOAD_CANCEL.name, notificationData.id)
+            )
+        }
+    }
+
+    private fun createRemoteViewsSmallOld(notificationData: NotificationData): RemoteViews {
+        return  RemoteViews(context.packageName, R.layout.notification_layout_small_old).apply {
+            setProgressBar(
+                R.id.progressIndicator_small_old, 100, notificationData.progress, notificationData.isIndeterminate
+            )
+
+            setTextViewText(R.id.tv_notific_small_old_eta, "EE:EE Left")
+
+            if (notificationData.status == NotificationStatus.PAUSED) {
+                setViewVisibility(R.id.btn_notific_small_old_resume, View.VISIBLE)
+                setViewVisibility(R.id.btn_notific_small_old_pause, View.GONE)
+            } else {
+                setViewVisibility(R.id.btn_notific_small_old_resume, View.GONE)
+                setViewVisibility(R.id.btn_notific_small_old_pause, View.VISIBLE)
+            }
+
+            setOnClickPendingIntent(
+                R.id.btn_notific_small_old_resume,
+                getPendingIntent(NotificationAction.DOWNLOAD_RESUME.name, notificationData.id)
+            )
+            setOnClickPendingIntent(
+                R.id.btn_notific_small_old_pause,
+                getPendingIntent(NotificationAction.DOWNLOAD_PAUSE.name, notificationData.id)
+            )
+            setOnClickPendingIntent(
+                R.id.btn_notific_small_old_cancel,
                 getPendingIntent(NotificationAction.DOWNLOAD_CANCEL.name, notificationData.id)
             )
         }
