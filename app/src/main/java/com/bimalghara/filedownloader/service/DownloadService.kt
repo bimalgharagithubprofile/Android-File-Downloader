@@ -247,8 +247,8 @@ class DownloadService : Service() {
     }
 
     private fun actionResume(downloadId: Int) = coroutineScope.launch {
-        val pausedQueuedItem = openQueuedList.single { it.id == downloadId }
-        if(pausedQueuedItem.size > 0) {
+        val pausedQueuedItem = openQueuedList.filter { it.id == downloadId }.singleOrNull()
+        if(pausedQueuedItem != null) {
             if(pausedQueuedItem.wifiOnly){
                 if(downloadRepository.networkStatusLive.value?.first == NetworkConnectivity.Status.WIFI){
                     downloadFileFromNetwork(this@DownloadService, pausedQueuedItem)
