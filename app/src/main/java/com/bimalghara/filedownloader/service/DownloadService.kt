@@ -317,7 +317,7 @@ class DownloadService : Service() {
                     val notificationData = NotificationData(
                         id = downloadId,
                         status = NotificationStatus.STARTED,
-                        name = "",
+                        name = "Kafka Kuru Kuru Kafka Kuru Kuru Kuru - 10 hour.mp3",
                         progress = initialProgress,
                         actionData = "0B of 0B",
                         speed = downloadSpeed
@@ -332,7 +332,7 @@ class DownloadService : Service() {
                     val notificationData = NotificationData(
                         id = downloadId,
                         status = NotificationStatus.PAUSED,
-                        name = "",
+                        name = "Kafka Kuru Kuru Kafka Kuru Kuru Kuru - 10 hour.mp3",
                         progress = lastProgress,
                         isIndeterminate = isIndeterminate
                     )
@@ -350,7 +350,7 @@ class DownloadService : Service() {
                     val notificationData = NotificationData(
                         id = downloadId,
                         status = NotificationStatus.IN_PROGRESS,
-                        name = "",
+                        name = "Kafka Kuru Kuru Kafka Kuru Kuru Kuru - 10 hour.mp3",
                         actionData = "0B",
                         speed = downloadSpeed,
                         isIndeterminate = true
@@ -364,7 +364,7 @@ class DownloadService : Service() {
                     val notificationData = NotificationData(
                         id = downloadId,
                         status = NotificationStatus.IN_PROGRESS,
-                        name = "",
+                        name = "Kafka Kuru Kuru Kafka Kuru Kuru Kuru - 10 hour.mp3",
                         actionData = "0B of 0B",
                         progress = progress,
                         speed = downloadSpeed

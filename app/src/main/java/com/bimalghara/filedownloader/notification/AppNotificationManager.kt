@@ -48,71 +48,91 @@ class AppNotificationManager(private val context: Context) {
 
     fun showFileDownloadNotification(notificationData: NotificationData) {
 
-        val notificationLayout = RemoteViews(context.packageName, R.layout.notification_layout)
-
-        notificationLayout.setProgressBar(
-            R.id.progressIndicator, 100, notificationData.progress, notificationData.isIndeterminate
-        )
-
-        notificationLayout.setOnClickPendingIntent(
-            R.id.resume_button,
-            getPendingIntent(NotificationAction.DOWNLOAD_RESUME.name, notificationData.id)
-        )
-
-        notificationLayout.setOnClickPendingIntent(
-            R.id.pause_button,
-            getPendingIntent(NotificationAction.DOWNLOAD_PAUSE.name, notificationData.id)
-        )
-
-        notificationLayout.setOnClickPendingIntent(
-            R.id.cancel_button,
-            getPendingIntent(NotificationAction.DOWNLOAD_CANCEL.name, notificationData.id)
-        )
-
-        notificationLayout.setTextViewText(R.id.tvName, notificationData.name)
-
-        if(notificationData.eta!=null){
-            notificationLayout.setTextViewText(R.id.tvETA, notificationData.eta)
-            notificationLayout.setViewVisibility(R.id.tvETA, View.VISIBLE)
-        } else {
-            notificationLayout.setViewVisibility(R.id.tvETA, View.GONE)
-        }
-
-        if(notificationData.actionData!=null){
-            notificationLayout.setTextViewText(R.id.tvAction, notificationData.actionData)
-            notificationLayout.setViewVisibility(R.id.tvAction, View.VISIBLE)
-        } else {
-            notificationLayout.setViewVisibility(R.id.tvAction, View.GONE)
-        }
-
-        if(notificationData.speed!=null){
-            notificationLayout.setTextViewText(R.id.tvSpeed, notificationData.speed)
-            notificationLayout.setViewVisibility(R.id.tvSpeed, View.VISIBLE)
-            notificationLayout.setViewVisibility(R.id.tvSeparator, View.VISIBLE)
-        } else {
-            notificationLayout.setViewVisibility(R.id.tvSpeed, View.GONE)
-            notificationLayout.setViewVisibility(R.id.tvSeparator, View.GONE)
-        }
-
-        if (notificationData.status == NotificationStatus.PAUSED) {
-            notificationLayout.setViewVisibility(R.id.resume_button, View.VISIBLE)
-            notificationLayout.setViewVisibility(R.id.pause_button, View.GONE)
-        } else {
-            notificationLayout.setViewVisibility(R.id.resume_button, View.GONE)
-            notificationLayout.setViewVisibility(R.id.pause_button, View.VISIBLE)
-        }
-
-
+        val notificationLayoutSmall = createRemoteViewsSmall(notificationData)
+        val notificationLayoutSmallLarge = createRemoteViewsLarge(notificationData)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_FILE_DOWNLOAD)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
-            .setCustomContentView(notificationLayout)
+            .setCustomContentView(notificationLayoutSmall)
+            .setCustomBigContentView(notificationLayoutSmallLarge)
             .build()
 
         val notificationManager = NotificationManagerCompat.from(context)
         notificationManager.notify(notificationData.id, builder)
+    }
+
+    private fun createRemoteViewsSmall(notificationData: NotificationData): RemoteViews {
+        val notificationLayout = RemoteViews(context.packageName, R.layout.notification_layout_small).apply {
+            setProgressBar(
+                R.id.progressIndicator, 100, notificationData.progress, notificationData.isIndeterminate
+            )
+
+            setTextViewText(R.id.tv_notific_small_eta, "EE:EE Left")
+
+            if (notificationData.status == NotificationStatus.PAUSED) {
+                setViewVisibility(R.id.btn_notific_small_resume, View.VISIBLE)
+                setViewVisibility(R.id.btn_notific_small_pause, View.GONE)
+            } else {
+                setViewVisibility(R.id.btn_notific_small_resume, View.GONE)
+                setViewVisibility(R.id.btn_notific_small_pause, View.VISIBLE)
+            }
+
+            setOnClickPendingIntent(
+                R.id.btn_notific_small_resume,
+                getPendingIntent(NotificationAction.DOWNLOAD_RESUME.name, notificationData.id)
+            )
+            setOnClickPendingIntent(
+                R.id.btn_notific_small_pause,
+                getPendingIntent(NotificationAction.DOWNLOAD_PAUSE.name, notificationData.id)
+            )
+            setOnClickPendingIntent(
+                R.id.btn_notific_small_cancel,
+                getPendingIntent(NotificationAction.DOWNLOAD_CANCEL.name, notificationData.id)
+            )
+        }
+
+        /*notificationLayout.setProgressBar(
+            R.id.progressIndicator, 100, notificationData.progress, notificationData.isIndeterminate
+        )
+
+        notificationLayout.setTextViewText(R.id.tvETA, "EE:EE Left")
+
+        if (notificationData.status == NotificationStatus.PAUSED) {
+            notificationLayout.setViewVisibility(R.id.btn_notific_small_resume, View.VISIBLE)
+            notificationLayout.setViewVisibility(R.id.btn_notific_small_pause, View.GONE)
+        } else {
+            notificationLayout.setViewVisibility(R.id.btn_notific_small_resume, View.GONE)
+            notificationLayout.setViewVisibility(R.id.btn_notific_small_pause, View.VISIBLE)
+        }
+
+        notificationLayout.setOnClickPendingIntent(
+            R.id.btn_notific_small_resume,
+            getPendingIntent(NotificationAction.DOWNLOAD_RESUME.name, notificationData.id)
+        )
+
+        notificationLayout.setOnClickPendingIntent(
+            R.id.btn_notific_small_pause,
+            getPendingIntent(NotificationAction.DOWNLOAD_PAUSE.name, notificationData.id)
+        )
+
+        notificationLayout.setOnClickPendingIntent(
+            R.id.btn_notific_small_cancel,
+            getPendingIntent(NotificationAction.DOWNLOAD_CANCEL.name, notificationData.id)
+        )*/
+
+        return notificationLayout
+    }
+
+    private fun createRemoteViewsLarge(notificationData: NotificationData): RemoteViews {
+        val notificationLayout = RemoteViews(context.packageName, R.layout.notification_layout_large)
+
+        notificationLayout.setProgressBar(
+            R.id.progressIndicator, 100, notificationData.progress, notificationData.isIndeterminate
+        )
+
+        return notificationLayout
     }
 
     private fun getPendingIntent(action: String, notificationId: Int): PendingIntent? {
