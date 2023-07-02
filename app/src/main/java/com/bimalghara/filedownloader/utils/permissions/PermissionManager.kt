@@ -1,6 +1,7 @@
 package com.bimalghara.filedownloader.utils.permissions
 
 import android.app.AlertDialog
+import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
 import androidx.appcompat.app.AppCompatActivity
@@ -8,7 +9,10 @@ import androidx.core.content.ContextCompat
 import com.bimalghara.filedownloader.R
 import java.lang.ref.WeakReference
 
-class PermissionManager private constructor(private val activity: WeakReference<AppCompatActivity>) {
+class PermissionManager private constructor(
+    private val activity: WeakReference<AppCompatActivity>,
+    private val appContext: WeakReference<Context>
+) {
 
     private val requiredPermissions = mutableListOf<Permissions>()
     private var rationale: String? = null
@@ -21,7 +25,7 @@ class PermissionManager private constructor(private val activity: WeakReference<
 
 
     companion object {
-        fun from(activity: AppCompatActivity) = PermissionManager(WeakReference(activity))
+        fun from(activity: AppCompatActivity, context: Context) = PermissionManager(WeakReference(activity), WeakReference(context))
     }
 
     fun rationale(description: String): PermissionManager {
@@ -50,14 +54,18 @@ class PermissionManager private constructor(private val activity: WeakReference<
     }
 
     private fun displayRationale(activity: AppCompatActivity) {
-        AlertDialog.Builder(activity.applicationContext)
-            .setTitle(activity.getString(R.string.dialog_permission_title))
-            .setMessage(rationale ?: activity.getString(R.string.dialog_permission_default_message))
-            .setCancelable(false)
-            .setPositiveButton(activity.getString(R.string.dialog_permission_button_positive)) { _, _ ->
-                requestPermissions()
-            }
-            .show()
+        appContext.get()?.let { context ->
+            AlertDialog.Builder(context)
+                .setTitle(activity.getString(R.string.dialog_permission_title))
+                .setMessage(
+                    rationale ?: activity.getString(R.string.dialog_permission_default_message)
+                )
+                .setCancelable(false)
+                .setPositiveButton(activity.getString(R.string.dialog_permission_button_positive)) { _, _ ->
+                    requestPermissions()
+                }
+                .show()
+        }
     }
 
     private fun sendPositiveResult() {

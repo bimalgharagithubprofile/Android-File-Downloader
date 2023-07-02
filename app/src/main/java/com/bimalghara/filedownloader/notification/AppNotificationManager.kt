@@ -52,7 +52,7 @@ class AppNotificationManager(private val context: Context) {
         val notificationLayoutSmallLarge = createRemoteViewsLarge(notificationData)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_FILE_DOWNLOAD)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.logo)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setCustomContentView(notificationLayoutSmall)

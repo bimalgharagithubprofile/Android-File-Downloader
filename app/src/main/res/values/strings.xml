@@ -2,8 +2,8 @@
     <string name="app_name">File Downloader</string>
 
     <!--permissions-->
-    <string name="dialog_permission_title">Permission required</string>
-    <string name="dialog_permission_default_message">Default message</string>
+    <string name="dialog_permission_title">Please allow all the necessary permissions</string>
+    <string name="dialog_permission_default_message">Please allow</string>
     <string name="dialog_permission_button_positive">OK</string>
 
     <!--error-->

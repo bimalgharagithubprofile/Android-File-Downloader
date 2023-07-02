@@ -44,7 +44,7 @@ class MainActivity : BaseActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 
-    private val permissionManager = PermissionManager.from(this@MainActivity)
+    private val permissionManager = PermissionManager.from(this@MainActivity, this@MainActivity)
 
     private var bottomSheetSettings: BottomSheetBehavior<FrameLayout>?=null
     private var bottomSheetAddNew: BottomSheetBehavior<FrameLayout>?=null
@@ -329,15 +329,34 @@ class MainActivity : BaseActivity() {
 
         binding.addNewSheet.btnAddEnqueue.setOnClickListener {
             binding.root.hideKeyboard()
-            viewModel.addIntoQueue(
-                this,
-                binding.addNewSheet.etFileName.text,
-                binding.addNewSheet.cbDownloadOverWiFi.isChecked
-            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                permissionManager
+                    .request(Permissions.Notification)
+                    .rationale("We need notification Permissions to show progress of download also you may control them like pause the download or cancel them.")
+                    .checkPermission { granted ->
+                        if (granted) {
+                            Log.e(logTag, "notification runtime permissions allowed")
+                            addIntoQueue()
+                        } else {
+                            Log.e(logTag, "Allow notification permissions from Settings")
+                            viewModel._errorSingleEvent.value = SingleEvent(getStringFromResource(R.string.error_no_permission))
+                        }
+                    }
+            } else {
+                addIntoQueue()
+            }
         }
         binding.addNewSheet.btnCloseEnqueue.setOnClickListener {
             bottomSheetAddNew?.state = BottomSheetBehavior.STATE_HIDDEN
         }
+    }
+
+    private fun addIntoQueue(){
+        viewModel.addIntoQueue(
+            this,
+            binding.addNewSheet.etFileName.text,
+            binding.addNewSheet.cbDownloadOverWiFi.isChecked
+        )
     }
 
     private fun setSuccess() {
