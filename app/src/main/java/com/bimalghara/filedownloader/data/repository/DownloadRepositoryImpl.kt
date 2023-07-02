@@ -89,7 +89,7 @@ class DownloadRepositoryImpl @Inject constructor(
             }
 
             updateDownloadStarted(downloadEntity.id, initialProgress)
-            callback.onDownloadStarted(initialProgress, downloadEntity.id)
+            callback.onDownloadStarted(initialProgress, downloadEntity.id, downloadEntity.name)
 
             try {
                 val response = downloadCall.awaitResponse()
@@ -123,7 +123,7 @@ class DownloadRepositoryImpl @Inject constructor(
                 if (networkStatusLive.value?.first != NetworkConnectivity.Status.WIFI || networkStatusLive.value?.first != NetworkConnectivity.Status.CELLULAR) {
                     logs(logTag, "Download broke WiFi lost: ${e.message} [${networkStatusLive.value}]")
                     updateDownloadPaused(downloadEntity.id, 1, InterruptedBy.NO_WIFI)
-                    callback.onDownloadPaused(downloadEntity.id, 1)
+                    callback.onDownloadPaused(downloadEntity.id, 1, downloadEntity.name)
                     removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_PAUSE)
                 } else {
                     logs(logTag, "Download failed: ${e.message} [${networkStatusLive.value}]")
@@ -202,15 +202,13 @@ class DownloadRepositoryImpl @Inject constructor(
                 if (totalBytes > 0) {
                     val currentProgress = fetchProgress(totalBytesRead, totalBytes)
                     if (currentProgress != previousProgress && currentProgress < 100) {
-                        callback.onProgressUpdate(currentProgress, downloadEntity.id)
+                        val actionData = "${totalBytesRead.toSize()} of ${totalBytes.toSize()}"
+                        callback.onProgressUpdate(currentProgress, downloadEntity.id, downloadEntity.name, actionData)
                         previousProgress = currentProgress
                         lastProgress = currentProgress
                     }
                 } else {
-                    callback.onInfiniteProgressUpdate(
-                        totalBytesRead.toSize(),
-                        downloadEntity.id
-                    )
+                    callback.onInfiniteProgressUpdate(totalBytesRead.toSize(), downloadEntity.id, downloadEntity.name)
                 }
 
                 // paused
@@ -222,7 +220,7 @@ class DownloadRepositoryImpl @Inject constructor(
                     body.close()
 
                     updateDownloadPaused(downloadEntity.id, lastProgress, InterruptedBy.USER)
-                    callback.onDownloadPaused(downloadEntity.id, lastProgress)
+                    callback.onDownloadPaused(downloadEntity.id, lastProgress, downloadEntity.name)
 
                     cancelJob(downloadEntity.id)
                     removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_PAUSE)
@@ -259,7 +257,7 @@ class DownloadRepositoryImpl @Inject constructor(
             if (networkStatusLive.value?.first != NetworkConnectivity.Status.WIFI || networkStatusLive.value?.first != NetworkConnectivity.Status.CELLULAR) {
                 logs(logTag, "WiFi lost: ${e.message} [${networkStatusLive.value}]")
                 updateDownloadPaused(downloadEntity.id, lastProgress, InterruptedBy.NO_WIFI)
-                callback.onDownloadPaused(downloadEntity.id, lastProgress)
+                callback.onDownloadPaused(downloadEntity.id, lastProgress, downloadEntity.name)
                 removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_PAUSE)
             } else {
                 logs(logTag, "Failed to write the file to disk: ${e.message} [${networkStatusLive.value}]")

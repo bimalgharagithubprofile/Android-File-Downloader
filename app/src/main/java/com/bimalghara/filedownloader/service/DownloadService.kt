@@ -310,29 +310,28 @@ class DownloadService : Service() {
             logs(logTag, "tmpFile opened")
             downloadRepository.downloadFile(baseContext, downloadEntity, tempFilePath,  object : DownloadCallback {
 
-                override fun onDownloadStarted(initialProgress: Int, downloadId: Int) {
+                override fun onDownloadStarted(initialProgress: Int, downloadId: Int, name: String) {
                     logs(logTag, "onDownloadStarted() => progress => $initialProgress, downloadId => $downloadId")
                     notificationManager?.cancelNotification(downloadId)
                     val downloadSpeed = (downloadRepository.networkStatusLive.value?.second ?: 0L).toSpeed()
                     val notificationData = NotificationData(
                         id = downloadId,
                         status = NotificationStatus.STARTED,
-                        name = "Kafka Kuru Kuru Kafka Kuru Kuru Kuru - 10 hour.mp3",
+                        name = name,
                         progress = initialProgress,
-                        actionData = "0B of 0B",
                         speed = downloadSpeed
                     )
                     notificationManager?.showFileDownloadNotification(notificationData)
                 }
 
-                override fun onDownloadPaused(downloadId: Int, lastProgress: Int) {
+                override fun onDownloadPaused(downloadId: Int, lastProgress: Int, name: String) {
                     logs(logTag, "onDownloadPaused() => downloadId => $downloadId")
                     notificationManager?.cancelNotification(downloadId)
                     val isIndeterminate = lastProgress <= 0
                     val notificationData = NotificationData(
                         id = downloadId,
                         status = NotificationStatus.PAUSED,
-                        name = "Kafka Kuru Kuru Kafka Kuru Kuru Kuru - 10 hour.mp3",
+                        name = name,
                         progress = lastProgress,
                         isIndeterminate = isIndeterminate
                     )
@@ -344,28 +343,28 @@ class DownloadService : Service() {
                     notificationManager?.cancelNotification(downloadId)
                 }
 
-                override fun onInfiniteProgressUpdate(downloadedData: String, downloadId: Int) {
+                override fun onInfiniteProgressUpdate(downloadedData: String, downloadId: Int, name: String) {
                     logs(logTag, "onInfiniteDownloadProgress() => $downloadedData, downloadId => $downloadId")
                     val downloadSpeed = (downloadRepository.networkStatusLive.value?.second ?: 0L).toSpeed()
                     val notificationData = NotificationData(
                         id = downloadId,
                         status = NotificationStatus.IN_PROGRESS,
-                        name = "Kafka Kuru Kuru Kafka Kuru Kuru Kuru - 10 hour.mp3",
-                        actionData = "0B",
+                        name = name,
+                        actionData = downloadedData,
                         speed = downloadSpeed,
                         isIndeterminate = true
                     )
                     notificationManager?.showFileDownloadNotification(notificationData)
                 }
 
-                override fun onProgressUpdate(progress: Int, downloadId: Int) {
+                override fun onProgressUpdate(progress: Int, downloadId: Int, name: String, actionData: String) {
                     logs(logTag, "onProgressUpdate: $progress, downloadId => $downloadId")
                     val downloadSpeed = (downloadRepository.networkStatusLive.value?.second ?: 0L).toSpeed()
                     val notificationData = NotificationData(
                         id = downloadId,
                         status = NotificationStatus.IN_PROGRESS,
-                        name = "Kafka Kuru Kuru Kafka Kuru Kuru Kuru - 10 hour.mp3",
-                        actionData = "0B of 0B",
+                        name = name,
+                        actionData = actionData,
                         progress = progress,
                         speed = downloadSpeed
                     )
