@@ -10,8 +10,9 @@ import androidx.lifecycle.viewModelScope
 import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.common.dispatcher.DispatcherProviderSource
 import com.bimalghara.filedownloader.data.local.preferences.DataStoreSource
+import com.bimalghara.filedownloader.domain.mapper.toState
+import com.bimalghara.filedownloader.domain.model.DownloadItemState
 import com.bimalghara.filedownloader.domain.model.FileDetails
-import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.domain.repository.FileRepositorySource
 import com.bimalghara.filedownloader.utils.*
 import com.bimalghara.filedownloader.utils.FunUtil.convertTimestampToLocalDate
@@ -45,8 +46,8 @@ class MainViewModel @Inject constructor(
     private val _selectedPathLiveData = MutableLiveData<DocumentFile?>(null)
     val selectedPathLiveData: LiveData<DocumentFile?> get() = _selectedPathLiveData
 
-    private val _downloadsLiveData = MutableLiveData<ResourceWrapper<MutableMap<String, MutableList<DownloadEntity>>>>()
-    val downloadsLiveData: LiveData<ResourceWrapper<MutableMap<String, MutableList<DownloadEntity>>>> get() = _downloadsLiveData
+    private val _downloadsLiveData = MutableLiveData<ResourceWrapper<MutableMap<String, MutableList<DownloadItemState>>>>()
+    val downloadsLiveData: LiveData<ResourceWrapper<MutableMap<String, MutableList<DownloadItemState>>>> get() = _downloadsLiveData
 
     private val _enqueueLiveData = MutableLiveData<ResourceWrapper<Boolean>>()
     val enqueueLiveData: LiveData<ResourceWrapper<Boolean>> get() = _enqueueLiveData
@@ -83,15 +84,16 @@ class MainViewModel @Inject constructor(
                     convertTimestampToLocalDate(record.updatedAt)
                 }.entries.sortedByDescending { it.key }
 
-                val completeList = mutableMapOf<String, MutableList<DownloadEntity>>()
+                val completeList = mutableMapOf<String, MutableList<DownloadItemState>>()
                 for ((date, records) in groupedRecords) {
                     val day = getDay(date)
                     logs(logTag, "Date: $date [$day], Records: ${records[0]}")
 
+                    val downloadItemState = records[0].toState()
                     if(completeList.containsKey(day)){
-                        completeList[day]?.add(records[0])
+                        completeList[day]?.add(downloadItemState)
                     } else {
-                        completeList[day] = mutableListOf(records[0])
+                        completeList[day] = mutableListOf(downloadItemState)
                     }
                 }
                 logs(logTag, "completeList: Days: ${completeList.keys}")

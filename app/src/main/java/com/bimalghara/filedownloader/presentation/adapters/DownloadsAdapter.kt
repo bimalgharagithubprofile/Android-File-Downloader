@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.databinding.ItemDownloadBinding
-import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
+import com.bimalghara.filedownloader.domain.model.DownloadItemState
 import com.bimalghara.filedownloader.presentation.base.OnRecyclerViewItemClick
 import com.bimalghara.filedownloader.utils.*
 import com.bimalghara.filedownloader.utils.FileUtil.getDomainName
@@ -25,17 +25,17 @@ class DownloadsAdapter(
     val context: Context
 ): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    private var onItemClickListener: OnRecyclerViewItemClick<DownloadEntity>? = null
-    fun setOnItemClickListener(onRecyclerViewItemClick: OnRecyclerViewItemClick<DownloadEntity>){
+    private var onItemClickListener: OnRecyclerViewItemClick<DownloadItemState>? = null
+    fun setOnItemClickListener(onRecyclerViewItemClick: OnRecyclerViewItemClick<DownloadItemState>){
         this.onItemClickListener = onRecyclerViewItemClick
     }
 
-    private val differCallback = object : DiffUtil.ItemCallback<DownloadEntity>(){
-        override fun areItemsTheSame(oldItem: DownloadEntity, newItem: DownloadEntity): Boolean {
+    private val differCallback = object : DiffUtil.ItemCallback<DownloadItemState>(){
+        override fun areItemsTheSame(oldItem: DownloadItemState, newItem: DownloadItemState): Boolean {
             return oldItem.id == newItem.id
         }
 
-        override fun areContentsTheSame(oldItem: DownloadEntity, newItem: DownloadEntity): Boolean {
+        override fun areContentsTheSame(oldItem: DownloadItemState, newItem: DownloadItemState): Boolean {
             return oldItem == newItem
         }
     }
@@ -63,7 +63,6 @@ class DownloadsAdapter(
                                 R.drawable.item_pending
                             )
                         )
-                        holder.binding.progressIndicator.setIndicatorColor(ResourcesCompat.getColor(context.resources, R.color.green, null))
                         holder.binding.tvAction.text = context.getStringFromResource(R.string.error_waiting_in_queue)
                         holder.binding.progressIndicator.toVisible()
                         holder.binding.tvFrom.toGone()
@@ -76,6 +75,8 @@ class DownloadsAdapter(
                                 R.drawable.item_pause
                             )
                         )
+                        holder.binding.progressIndicator.setIndicatorColor(ResourcesCompat.getColor(context.resources, R.color.green, null))
+                        holder.binding.progressIndicator.toVisible()
                         holder.binding.tvFrom.toGone()
                         holder.binding.tvFromSeparator.toGone()
                     }
@@ -128,6 +129,11 @@ class DownloadsAdapter(
                 }
 
                 holder.binding.tvName.text = itemDownload.name
+
+                //hold view state
+                itemDownload.tvProgress = holder.binding.tvProgress
+                itemDownload.progressIndicator = holder.binding.progressIndicator
+                itemDownload.tvAction = holder.binding.tvAction
 
                 //click event
                 holder.binding.root.setOnClickListener {

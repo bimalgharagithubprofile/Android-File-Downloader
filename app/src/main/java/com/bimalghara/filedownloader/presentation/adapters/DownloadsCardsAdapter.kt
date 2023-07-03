@@ -1,14 +1,14 @@
 package com.bimalghara.filedownloader.presentation.adapters
 
 import android.content.Context
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.databinding.ItemCardBinding
-import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
+import com.bimalghara.filedownloader.domain.model.DownloadItemState
+import com.bimalghara.filedownloader.notification.model.NotificationData
 import com.bimalghara.filedownloader.presentation.base.OnRecyclerViewItemClick
 import com.bimalghara.filedownloader.utils.Logger.logs
 import com.bimalghara.filedownloader.utils.RecyclerViewItemDecoration
@@ -22,17 +22,27 @@ class DownloadsCardsAdapter(
 ): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private val logTag = javaClass.simpleName
 
-    private var onItemClickListener: OnRecyclerViewItemClick<DownloadEntity>? = null
-    fun setOnItemClickListener(onRecyclerViewItemClick: OnRecyclerViewItemClick<DownloadEntity>){
+    private var onItemClickListener: OnRecyclerViewItemClick<DownloadItemState>? = null
+    fun setOnItemClickListener(onRecyclerViewItemClick: OnRecyclerViewItemClick<DownloadItemState>){
         this.onItemClickListener = onRecyclerViewItemClick
     }
 
-    private var dataSet = mutableMapOf<String, MutableList<DownloadEntity>>()
+    private var dataSet = mapOf<String, MutableList<DownloadItemState>>()
 
-    fun updateDataSet(data: MutableMap<String, MutableList<DownloadEntity>>) {
-        dataSet.clear()
+    fun updateDataSet(data: MutableMap<String, MutableList<DownloadItemState>>) {
         dataSet = data
         notifyDataSetChanged()
+    }
+
+    fun updateProgress(notificationData: NotificationData) {
+        val itemState = dataSet.values.flatten().find { item ->
+            item.id == notificationData.id
+        }
+        itemState?.let {
+            it.tvProgress?.text = "${notificationData.progress}%"
+            it.progressIndicator?.setProgressCompat(notificationData.progress, true)
+            it.tvAction?.text = notificationData.actionData?:""
+        }
     }
 
     inner class CardsViewHolder(val binding: ItemCardBinding): RecyclerView.ViewHolder(binding.root)
@@ -51,8 +61,8 @@ class DownloadsCardsAdapter(
                 holder.binding.tvDay.text = itemDay
 
                 val downloadsAdapter = DownloadsAdapter(context).also {
-                    it.setOnItemClickListener(object : OnRecyclerViewItemClick<DownloadEntity> {
-                        override fun onItemClick(data: DownloadEntity) {
+                    it.setOnItemClickListener(object : OnRecyclerViewItemClick<DownloadItemState> {
+                        override fun onItemClick(data: DownloadItemState) {
                             logs(logTag, "DownloadsAdapter::onItemClick => $data")
                             onItemClickListener?.onItemClick(data)
                         }

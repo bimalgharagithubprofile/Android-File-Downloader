@@ -8,7 +8,7 @@ import com.bimalghara.filedownloader.utils.DownloadStatus
  * Created by BimalGhara
  */
 @Entity
-data class DownloadEntity(
+data class    DownloadEntity(
     @PrimaryKey(autoGenerate = true)
     var id: Int = 0,
 

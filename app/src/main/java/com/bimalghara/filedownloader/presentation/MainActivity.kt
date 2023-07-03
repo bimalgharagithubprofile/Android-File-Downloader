@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.broadcast.LocalMessageSender
 import com.bimalghara.filedownloader.databinding.ActivityMainBinding
+import com.bimalghara.filedownloader.domain.model.DownloadItemState
 import com.bimalghara.filedownloader.domain.model.FileDetails
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.notification.model.NotificationData
@@ -68,7 +69,7 @@ class MainActivity : BaseActivity() {
             if(notificationData != null){
                 logs(logTag, "receiving NotificationData: ${notificationData.progress}")
 
-                //downloadsCardsAdapter.updateDataSet()
+                downloadsCardsAdapter.updateProgress(notificationData)
             } else {
                 logs(logTag, "receiving broken Parcelable!")
             }
@@ -177,8 +178,8 @@ class MainActivity : BaseActivity() {
 
     private fun setupDownloadsRecyclerview() {
         downloadsCardsAdapter = DownloadsCardsAdapter(this).also {
-            it.setOnItemClickListener(object : OnRecyclerViewItemClick<DownloadEntity> {
-                override fun onItemClick(data: DownloadEntity) {
+            it.setOnItemClickListener(object : OnRecyclerViewItemClick<DownloadItemState> {
+                override fun onItemClick(data: DownloadItemState) {
                     Log.e(logTag, "Adapter::onItemClick => $data")
                 }
             })

@@ -280,7 +280,7 @@ class DownloadRepositoryImpl @Inject constructor(
                 raf.close()
                 inputStream.close()
                 body.close()
-            }catch (ce: IOException){
+            }catch (ce: Exception){
                 logs(logTag, "Finally -> Closing -> failed: [${downloadEntity.id}] :: ${ce.message}")
             }
         }
