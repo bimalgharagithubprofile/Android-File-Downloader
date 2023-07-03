@@ -192,6 +192,7 @@ class MainActivity : BaseActivity() {
                     Log.e(logTag, "Adapter::onItemClick -> isCanceled:$isCanceled | data:$data")
                     if(isCanceled){
                         //remove from database & the file
+                        viewModel.removeDownload(this@MainActivity, data.id, data.downloadStatus)
                     } else {
                         when(data.downloadStatus) {
                             DownloadStatus.WAITING.name -> {
@@ -202,6 +203,9 @@ class MainActivity : BaseActivity() {
                             }
                             DownloadStatus.PAUSED.name -> {
                                 LocalMessageSender.sendMessageToBackground(this@MainActivity, action = NotificationAction.DOWNLOAD_RESUME.name, downloadId = data.id)
+                            }
+                            DownloadStatus.COMPLETED.name -> {
+                                //eeeeeeeee
                             }
                             DownloadStatus.FAILED.name -> {
                                 viewModel.reAddIntoQueue(this@MainActivity, data)

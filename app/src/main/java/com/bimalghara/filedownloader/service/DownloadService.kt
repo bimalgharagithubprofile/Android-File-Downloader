@@ -51,9 +51,8 @@ class DownloadService : Service() {
 
     private var notificationManager = AppNotificationManager
 
-    private var fileCacheDir:File?=null
+    //private var fileCacheDir:File?=null
 
-//    private val openQueuedList:MutableList<DownloadEntity> = arrayListOf()
 
     private val job = SupervisorJob()
     private val coroutineScope = CoroutineScope(Dispatchers.IO + job)
@@ -61,7 +60,7 @@ class DownloadService : Service() {
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val data = intent?.getStringExtra("action")
-            if (data != null) {
+            if (context!= null && data != null) {
                 when (data) {
                     NotificationAction.DOWNLOAD_START.name -> {
                         logs(logTag, "DOWNLOAD_START")
@@ -92,7 +91,7 @@ class DownloadService : Service() {
                     NotificationAction.DOWNLOAD_CANCEL.name -> {
                         val downloadId = intent.getIntExtra("DOWNLOAD_ID", -1)
                         if (downloadId != -1) {
-                            actionCancel(downloadId)
+                            actionCancel(context, downloadId)
                         } else logs(logTag, "onReceive: DOWNLOAD_PAUSE => DOWNLOAD_ID INVALID")
                     }
                 }
@@ -108,7 +107,7 @@ class DownloadService : Service() {
     override fun onCreate() {
         super.onCreate()
 
-        fileCacheDir = File(noBackupFilesDir?.path + "/downloads")
+        //fileCacheDir = File(noBackupFilesDir?.path + "/downloads")
 
         notificationManager = AppNotificationManager.from(this)
 
@@ -453,20 +452,17 @@ class DownloadService : Service() {
     private fun actionPauseAll() = coroutineScope.launch {
         downloadRepository.pauseAllDownload()
     }
-    private fun actionCancel(downloadId: Int) = coroutineScope.launch {
-        downloadRepository.cancelDownload(downloadId)
+    private fun actionCancel(context: Context, downloadId: Int) = coroutineScope.launch {
+        downloadRepository.cancelDownload(context, downloadId)
     }
 
     private fun downloadFileFromNetwork(appContext:Context, downloadEntity: DownloadEntity) = coroutineScope.launch(dispatcherProviderSource.io) {
         logs(logTag, "process download... id => ${downloadEntity.id}")
 
-        if(fileCacheDir == null) {
-            logs(logTag, "downloading terminated [cache dir not found] id => ${downloadEntity.id}")
-            return@launch
-        }
+        val fileCacheDir = File(appContext.noBackupFilesDir?.path + "/downloads")
 
-        if (!fileCacheDir!!.exists()){
-            fileCacheDir!!.mkdir()
+        if (!fileCacheDir.exists()){
+            fileCacheDir.mkdir()
         }
 
         val tempFilePath = fileCacheDir!!.path + "/" + downloadEntity.id + "_" + downloadEntity.name

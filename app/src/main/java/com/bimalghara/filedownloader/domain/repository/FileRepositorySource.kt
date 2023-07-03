@@ -29,10 +29,10 @@ interface FileRepositorySource {
 
     suspend fun pauseFromQueue(downloadId: Int)
 
-//    suspend fun resumePaused(appContext: Context, downloadId: Int)
+    suspend fun removeDownload(context: Context, downloadId: Int, downloadStatus: String)
 
     fun requestDownloadsFromLocal(): Flow<List<DownloadEntity>>
-    suspend fun requestFileDetailsFromNetwork(appContext: Context, url: String): Flow<ResourceWrapper<FileDetails>>
+    suspend fun requestFileDetailsFromNetwork(context: Context, url: String): Flow<ResourceWrapper<FileDetails>>
 
 
 }

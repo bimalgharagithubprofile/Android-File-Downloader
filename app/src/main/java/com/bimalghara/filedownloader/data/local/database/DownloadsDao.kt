@@ -15,6 +15,9 @@ interface DownloadsDao {
     @Query("SELECT * FROM DownloadEntity")
     fun getDownloads(): Flow<List<DownloadEntity>>
 
+    @Query("SELECT name FROM DownloadEntity WHERE id=:id")
+    fun getName(id: Int): String
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun addDownload(item: DownloadEntity): Long
 

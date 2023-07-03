@@ -12,12 +12,12 @@ import com.bimalghara.filedownloader.data.network.retrofit.service.ApiServiceDow
 import com.bimalghara.filedownloader.domain.model.FileDetails
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.domain.repository.FileRepositorySource
-import com.bimalghara.filedownloader.notification.AppNotificationManager
 import com.bimalghara.filedownloader.utils.*
+import com.bimalghara.filedownloader.utils.FileUtil.deleteOutputFile
+import com.bimalghara.filedownloader.utils.FileUtil.deleteTmpFile
 import com.bimalghara.filedownloader.utils.FileUtil.getMimeType
 import com.bimalghara.filedownloader.utils.FunUtil.createFileDetailsFromHeaders
 import com.bimalghara.filedownloader.utils.FunUtil.wakeUpDownloadService
-import com.bimalghara.filedownloader.utils.Logger.logs
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -103,59 +103,32 @@ class FileRepositoryImpl @Inject constructor(
         )
     }
 
-    /*override suspend fun resumePaused(appContext: Context, downloadId: Int) {
-        val settingParallelDownload =
-            dataStoreSource.getString(DS_KEY_SETTING_PARALLEL_DOWNLOAD)?.toInt()
-                ?: DEFAULT_PARALLEL_DOWNLOAD_LIMIT.toInt()
-        logs(logTag, "setting Parallel Download => $settingParallelDownload")
-
-        var availableParallelDownload = settingParallelDownload
-
-        val openQueuedList = downloadsDao.getOpenQueuedList()
-        val pausedQueuedItem = openQueuedList.filter { it.id == downloadId }.singleOrNull()
-        if(pausedQueuedItem != null) {
-            val groupedQueuedItems = openQueuedList.groupBy { it.downloadStatus }
-            val downloadingQueuedItems = groupedQueuedItems[DownloadStatus.DOWNLOADING.name] ?: emptyList()
-            val pausedQueuedItems = groupedQueuedItems[DownloadStatus.PAUSED.name] ?: emptyList()
-            val waitingQueuedItems = groupedQueuedItems[DownloadStatus.WAITING.name] ?: emptyList()
-            val groupedPausedQueuedItems = pausedQueuedItems.groupBy { it.interruptedBy }
-            val wifiInterruptedItems = groupedPausedQueuedItems[InterruptedBy.NO_WIFI.name] ?: emptyList()
-
-            //slot -> all in-progress [downloading & waiting-in-queue & waiting-for-wifi]
-            val totInProgress = (downloadingQueuedItems.size + waitingQueuedItems.size + wifiInterruptedItems.size)
-            if (totInProgress >= settingParallelDownload) {
-                logs(
-                    logTag,
-                    "slot-available: 0 Downloading: ${downloadingQueuedItems.size} waiting: ${waitingQueuedItems.size}"
-                )
-                availableParallelDownload = 0
-            } else {
-                availableParallelDownload = availableParallelDownload.minus(totInProgress)
-                if(availableParallelDownload<0) availableParallelDownload=0
-                logs(
-                    logTag,
-                    "slot-available: $availableParallelDownload already downloading: ${downloadingQueuedItems.size} already waiting-in-queue: ${waitingQueuedItems.size} already waiting-for-wifi: ${wifiInterruptedItems.size}"
-                )
-
+    override suspend fun removeDownload(
+        context: Context,
+        downloadId: Int,
+        downloadStatus: String
+    ) {
+        when (downloadStatus) {
+            DownloadStatus.DOWNLOADING.name -> {
+                LocalMessageSender.sendMessageToBackground(context, action = NotificationAction.DOWNLOAD_CANCEL.name, downloadId = downloadId)
             }
-
-            //slot full -> total in-progress
-            if(availableParallelDownload <= 0) {
-                putInWaiting(downloadId) //put in waiting
-                val notificationManager = AppNotificationManager.from(appContext)
-                notificationManager.cancelNotification(downloadId)
-            } else {
-                LocalMessageSender.sendMessageToBackground(appContext, action = NotificationAction.DOWNLOAD_RESUME.name, downloadId = downloadId)
+            DownloadStatus.COMPLETED.name -> {
+                deleteOutputFile(context, downloadId)
+                downloadsDao.deleteDownload(downloadId)
+            }
+            else -> {
+                deleteTmpFile(context, downloadsDao, downloadId)
+                downloadsDao.deleteDownload(downloadId)
             }
         }
-    }*/
+    }
 
     override fun requestDownloadsFromLocal(): Flow<List<DownloadEntity>> {
         return downloadsDao.getDownloads().flowOn(dispatcherProviderSource.io)
     }
 
     override suspend fun requestFileDetailsFromNetwork(
-        appContext: Context,
+        context: Context,
         url: String
     ): Flow<ResourceWrapper<FileDetails>>  = flow {
         emit(ResourceWrapper.Loading())
@@ -169,11 +142,11 @@ class FileRepositoryImpl @Inject constructor(
 
                 emit(ResourceWrapper.Success(data = fileDetails))
             } else {
-                emit(ResourceWrapper.Error(appContext.getStringFromResource(R.string.network_not_supported)))
+                emit(ResourceWrapper.Error(context.getStringFromResource(R.string.network_not_supported)))
             }
 
         } catch (e: Exception) {
-            emit(ResourceWrapper.Error(e.localizedMessage ?: appContext.getStringFromResource(R.string.error_default)))
+            emit(ResourceWrapper.Error(e.localizedMessage ?: context.getStringFromResource(R.string.error_default)))
         }
     }.flowOn(dispatcherProviderSource.io)
 

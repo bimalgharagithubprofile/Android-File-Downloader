@@ -9,6 +9,7 @@ import com.bimalghara.filedownloader.data.network.retrofit.ApiServiceGenerator
 import com.bimalghara.filedownloader.data.network.retrofit.service.ApiServiceDownload
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.utils.DownloadStatus
+import com.bimalghara.filedownloader.utils.FileUtil.deleteTmpFile
 import com.bimalghara.filedownloader.utils.FunUtil.fetchProgress
 import com.bimalghara.filedownloader.utils.InterruptedBy
 import com.bimalghara.filedownloader.utils.Logger.logs
@@ -151,7 +152,7 @@ class DownloadRepositoryImpl @Inject constructor(
         pauseAllFlags.set(true)
     }
 
-    fun cancelDownload(downloadId: Int) {
+    fun cancelDownload(context: Context, downloadId: Int) {
         logs(logTag, "canceling Download: $downloadId")
 
         //check if already paused | if yes -> cancel right away
@@ -160,8 +161,10 @@ class DownloadRepositoryImpl @Inject constructor(
             logs(logTag, "canceling Download case: already paused")
             val callback = downloadCallbacks[downloadId]
 
-            //eeeeee
-            //if (tempFile.exists()) tempFile.delete()
+            coroutineScope.launch(dispatcherProviderSource.io) {
+                deleteTmpFile(context, downloadsDao, downloadId)
+            }
+
 
             updateDownloadCanceled(downloadId)
             callback?.onDownloadCancelled(downloadId)
@@ -175,7 +178,7 @@ class DownloadRepositoryImpl @Inject constructor(
     }
 
     private suspend fun writeResponseBodyToDisk(
-        appContext: Context,
+        context: Context,
         body: ResponseBody,
         downloadEntity: DownloadEntity,
         tmpPath: String,
@@ -253,7 +256,7 @@ class DownloadRepositoryImpl @Inject constructor(
                     cancelJob(downloadEntity.id)
                     removeIdFromMap(downloadEntity.id, NotificationAction.DOWNLOAD_CANCEL)
 
-                    if (tempFile.exists()) tempFile.delete()
+                    deleteTmpFile(context, downloadsDao, downloadEntity.id)
 
                     return@withContext
                 }

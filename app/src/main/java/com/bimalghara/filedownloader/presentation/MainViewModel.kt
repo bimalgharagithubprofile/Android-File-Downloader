@@ -164,9 +164,10 @@ class MainViewModel @Inject constructor(
         fileRepositorySource.pauseFromQueue(downloadId)
     }
 
-    /*fun resumePaused(context: Context, downloadId: Int) = viewModelScope.launch(dispatcherProviderSource.io) {
-        fileRepositorySource.resumePaused(context, downloadId)
-    }*/
+    fun removeDownload(context: Context, id: Int, downloadStatus: String) = viewModelScope.launch(dispatcherProviderSource.io) {
+        fileRepositorySource.removeDownload(context, id, downloadStatus)
+    }
+
 
     private suspend fun getNetworkStatus(): NetworkConnectivity.Status {
         val result = networkConnectivity.getStatus(dispatcherProviderSource.io)

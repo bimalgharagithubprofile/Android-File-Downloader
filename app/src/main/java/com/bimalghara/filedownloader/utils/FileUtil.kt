@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.webkit.MimeTypeMap
+import com.bimalghara.filedownloader.data.local.database.DownloadsDao
 import com.bimalghara.filedownloader.utils.Logger.logs
 import java.io.*
 import java.net.URL
@@ -13,11 +14,12 @@ import java.text.DecimalFormat
 
 object FileUtil {
 
-    val protectedDirectories:MutableList<String> = arrayListOf()
+    val protectedDirectories: MutableList<String> = arrayListOf()
 
     val imageTypes = arrayOf("image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp")
     val videoTypes = arrayOf("video/mp4", "video/mpeg", "video/quicktime", "video/x-msvideo")
-    val audioTypes = arrayOf("audio/mp3", "audio/mpeg", "audio/wav", "audio/x-ms-wma", "audio/vnd.rn-realaudio")
+    val audioTypes =
+        arrayOf("audio/mp3", "audio/mpeg", "audio/wav", "audio/x-ms-wma", "audio/vnd.rn-realaudio")
 
     init {
         protectedDirectories.addAll(
@@ -63,7 +65,7 @@ object FileUtil {
     }
 
 
-    fun Long.toSize(space:String): String {
+    fun Long.toSize(space: String): String {
         val megabyte = 1024.0 * 1024.0
         val result = this.toDouble() / megabyte
 
@@ -97,13 +99,18 @@ object FileUtil {
         return outputStream.getByteCount()
     }
 
-    fun copyFileToUri(context: Context, sourceFilePath: String, destinationUri: Uri): Pair<Boolean, Long> {
+    fun copyFileToUri(
+        context: Context,
+        sourceFilePath: String,
+        destinationUri: Uri
+    ): Pair<Boolean, Long> {
         val inputStream: InputStream
         val outputStream: OutputStream
 
         try {
             inputStream = FileInputStream(File(sourceFilePath))
-            outputStream = context.contentResolver.openOutputStream(destinationUri) ?: return Pair(false, 0)
+            outputStream =
+                context.contentResolver.openOutputStream(destinationUri) ?: return Pair(false, 0)
 
             val countingOutputStream = CountingOutputStream(outputStream)
 
@@ -129,9 +136,25 @@ object FileUtil {
         }
     }
 
+    fun deleteTmpFile(context: Context, downloadsDao: DownloadsDao, downloadId: Int) {
+        try {
+            val fileCacheDir = File(context.noBackupFilesDir?.path + "/downloads")
+            if (fileCacheDir.exists()) {
+                val fileName = downloadsDao.getName(downloadId)
+                val tempFilePath = fileCacheDir.path + "/" + downloadId + "_" + fileName
+                val tempFile = File(tempFilePath)
+                if (tempFile.exists()) tempFile.delete()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    suspend fun deleteOutputFile(context: Context, downloadId: Int) {
+
+    }
 
 }
-
 
 
 class CountingOutputStream(private val wrappedOutputStream: OutputStream) : OutputStream() {
