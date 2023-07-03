@@ -25,8 +25,8 @@ class DownloadsAdapter(
     val context: Context
 ): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    private var onItemClickListener: OnRecyclerViewItemClick<DownloadItemState>? = null
-    fun setOnItemClickListener(onRecyclerViewItemClick: OnRecyclerViewItemClick<DownloadItemState>){
+    private var onItemClickListener: OnRecyclerViewItemClick<DownloadItemState, Boolean>? = null
+    fun setOnItemClickListener(onRecyclerViewItemClick: OnRecyclerViewItemClick<DownloadItemState, Boolean>){
         this.onItemClickListener = onRecyclerViewItemClick
     }
 
@@ -136,8 +136,11 @@ class DownloadsAdapter(
                 itemDownload.tvAction = holder.binding.tvAction
 
                 //click event
+                holder.binding.ivClose.setOnClickListener {
+                    onItemClickListener?.onItemClick(itemDownload, true)
+                }
                 holder.binding.root.setOnClickListener {
-                    onItemClickListener?.onItemClick(itemDownload)
+                    onItemClickListener?.onItemClick(itemDownload, false)
                 }
             }
         }

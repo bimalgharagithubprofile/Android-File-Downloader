@@ -179,9 +179,10 @@ class MainActivity : BaseActivity() {
 
     private fun setupDownloadsRecyclerview() {
         downloadsCardsAdapter = DownloadsCardsAdapter(this).also {
-            it.setOnItemClickListener(object : OnRecyclerViewItemClick<DownloadItemState> {
-                override fun onItemClick(data: DownloadItemState) {
-                    Log.e(logTag, "Adapter::onItemClick => $data")
+            it.setOnItemClickListener(object : OnRecyclerViewItemClick<DownloadItemState, Boolean> {
+                override fun onItemClick(data: DownloadItemState, isCanceled: Boolean) {
+                    Log.e(logTag, "Adapter::onItemClick -> isCanceled:$isCanceled | data:$data")
+
                 }
             })
         }

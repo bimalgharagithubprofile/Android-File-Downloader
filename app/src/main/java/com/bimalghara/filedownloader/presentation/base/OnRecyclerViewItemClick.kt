@@ -1,5 +1,5 @@
 package com.bimalghara.filedownloader.presentation.base
 
-interface OnRecyclerViewItemClick<T> {
-    fun onItemClick(data: T)
+interface OnRecyclerViewItemClick<T, Z> {
+    fun onItemClick(data: T, isCanceled: Boolean)
 }

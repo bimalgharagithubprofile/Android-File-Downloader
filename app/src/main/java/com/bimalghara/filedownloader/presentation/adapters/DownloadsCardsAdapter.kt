@@ -23,8 +23,8 @@ class DownloadsCardsAdapter(
 ): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private val logTag = javaClass.simpleName
 
-    private var onItemClickListener: OnRecyclerViewItemClick<DownloadItemState>? = null
-    fun setOnItemClickListener(onRecyclerViewItemClick: OnRecyclerViewItemClick<DownloadItemState>){
+    private var onItemClickListener: OnRecyclerViewItemClick<DownloadItemState, Boolean>? = null
+    fun setOnItemClickListener(onRecyclerViewItemClick: OnRecyclerViewItemClick<DownloadItemState, Boolean>){
         this.onItemClickListener = onRecyclerViewItemClick
     }
 
@@ -75,10 +75,10 @@ class DownloadsCardsAdapter(
                 holder.binding.tvDay.text = itemDay
 
                 val downloadsAdapter = DownloadsAdapter(context).also {
-                    it.setOnItemClickListener(object : OnRecyclerViewItemClick<DownloadItemState> {
-                        override fun onItemClick(data: DownloadItemState) {
+                    it.setOnItemClickListener(object : OnRecyclerViewItemClick<DownloadItemState, Boolean> {
+                        override fun onItemClick(data: DownloadItemState, isCanceled: Boolean) {
                             logs(logTag, "DownloadsAdapter::onItemClick => $data")
-                            onItemClickListener?.onItemClick(data)
+                            onItemClickListener?.onItemClick(data, isCanceled)
                         }
                     })
                 }
