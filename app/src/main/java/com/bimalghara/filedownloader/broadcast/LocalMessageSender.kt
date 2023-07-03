@@ -3,6 +3,7 @@ package com.bimalghara.filedownloader.broadcast
 import android.content.Context
 import android.content.Intent
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.bimalghara.filedownloader.domain.model.ProgressData
 import com.bimalghara.filedownloader.notification.model.NotificationData
 
 object LocalMessageSender {
@@ -17,12 +18,12 @@ object LocalMessageSender {
 
     }
 
-    fun sendMessageToForeground(context: Context, notificationData: NotificationData) {
+    fun sendMessageToForeground(context: Context, progressData: ProgressData) {
         //only if app is in foreground
 
         val messageIntent = Intent("${context.packageName}.NOTIFICATION_BROAD_CAST")
 
-        messageIntent.putExtra("NOTIFICATION_DATA", notificationData)
+        messageIntent.putExtra("PROGRESS_DATA", progressData)
 
         LocalBroadcastManager.getInstance(context).sendBroadcast(messageIntent)
 

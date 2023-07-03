@@ -22,6 +22,7 @@ import com.bimalghara.filedownloader.broadcast.LocalMessageSender
 import com.bimalghara.filedownloader.databinding.ActivityMainBinding
 import com.bimalghara.filedownloader.domain.model.DownloadItemState
 import com.bimalghara.filedownloader.domain.model.FileDetails
+import com.bimalghara.filedownloader.domain.model.ProgressData
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.notification.model.NotificationData
 import com.bimalghara.filedownloader.presentation.adapters.DownloadsCardsAdapter
@@ -61,15 +62,15 @@ class MainActivity : BaseActivity() {
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
 
-            val notificationData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-                intent?.getParcelableExtra("NOTIFICATION_DATA", NotificationData::class.java)
+            val progressData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                intent?.getParcelableExtra("PROGRESS_DATA", ProgressData::class.java)
             else
-                @Suppress("DEPRECATION") intent?.getParcelableExtra("NOTIFICATION_DATA") as? NotificationData?
+                @Suppress("DEPRECATION") intent?.getParcelableExtra("PROGRESS_DATA") as? ProgressData?
 
-            if(notificationData != null){
-                logs(logTag, "receiving NotificationData: ${notificationData.progress}")
+            if(progressData != null){
+                logs(logTag, "receiving ProgressData: ${progressData.progress}")
 
-                downloadsCardsAdapter.updateProgress(notificationData)
+                downloadsCardsAdapter.updateProgress(progressData)
             } else {
                 logs(logTag, "receiving broken Parcelable!")
             }
@@ -355,7 +356,7 @@ class MainActivity : BaseActivity() {
         binding.addNewSheet.groupFailed.toGone()
 
 
-        val size = fileDetails?.contentLength?.toSize()
+        val size = fileDetails?.contentLength?.toSize(" ")
         if(!size.isNullOrBlank()) {
             binding.addNewSheet.tvFileSize.text = size
         } else binding.addNewSheet.tvFileSize.toInvisible()

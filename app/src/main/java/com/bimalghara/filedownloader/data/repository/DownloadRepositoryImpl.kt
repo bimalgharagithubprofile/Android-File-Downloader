@@ -9,7 +9,6 @@ import com.bimalghara.filedownloader.data.network.retrofit.ApiServiceGenerator
 import com.bimalghara.filedownloader.data.network.retrofit.service.ApiServiceDownload
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.utils.DownloadStatus
-import com.bimalghara.filedownloader.utils.FileUtil.toSize
 import com.bimalghara.filedownloader.utils.FunUtil.fetchProgress
 import com.bimalghara.filedownloader.utils.InterruptedBy
 import com.bimalghara.filedownloader.utils.Logger.logs
@@ -215,7 +214,7 @@ class DownloadRepositoryImpl @Inject constructor(
                         lastProgress = currentProgress
                     }
                 } else {
-                    callback.onInfiniteProgressUpdate(totalBytesRead.toSize(), downloadEntity.id, downloadEntity.name)
+                    callback.onInfiniteProgressUpdate(totalBytesRead, downloadEntity.id, downloadEntity.name)
                 }
 
                 // paused all
@@ -350,16 +349,15 @@ class DownloadRepositoryImpl @Inject constructor(
     }
 
 
-    fun updateDownloadedFileUri(id: Int, size: Long, downloadedUri:String) =
-        coroutineScope.launch(dispatcherProviderSource.io) {
-            logs(logTag, "updateDownloadedFilePath: id=> $id")
-            downloadsDao.updateDownloadedFileUri(
-                id,
-                size,
-                downloadedUri,
-                System.currentTimeMillis()
-            )
-        }
+    suspend fun updateDownloadedFileUri(id: Int, size: Long, downloadedUri:String) {
+        logs(logTag, "updateDownloadedFilePath: id=> $id")
+        downloadsDao.updateDownloadedFileUri(
+            id,
+            size,
+            downloadedUri,
+            System.currentTimeMillis()
+        )
+    }
 
     private fun updateDownloadCanceled(id: Int) =
         coroutineScope.launch(dispatcherProviderSource.io) {

@@ -63,12 +63,12 @@ object FileUtil {
     }
 
 
-    fun Long.toSize(): String {
+    fun Long.toSize(space:String): String {
         val megabyte = 1024.0 * 1024.0
         val result = this.toDouble() / megabyte
 
         val decimalFormat = DecimalFormat("#.#")
-        return decimalFormat.format(result) + " MB"
+        return decimalFormat.format(result) + "${space}MB"
     }
 
     fun getDomainName(urlString: String): String {

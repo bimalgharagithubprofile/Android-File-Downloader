@@ -120,7 +120,7 @@ class DownloadsAdapter(
                             FileType.AUDIO -> holder.binding.ivIcon.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.item_audio))
                             else -> holder.binding.ivIcon.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.item_doc))
                         }
-                        holder.binding.tvAction.text = itemDownload.size.toSize()
+                        holder.binding.tvAction.text = itemDownload.size.toSize(" ")
                         holder.binding.progressIndicator.toGone()
                         holder.binding.tvFrom.text = getDomainName(itemDownload.url)
                         holder.binding.tvFrom.toVisible()

@@ -15,9 +15,11 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.broadcast.LocalMessageSender
+import com.bimalghara.filedownloader.common.dispatcher.DispatcherProviderSource
 import com.bimalghara.filedownloader.data.local.preferences.DataStoreSource
 import com.bimalghara.filedownloader.data.network.DownloadCallback
 import com.bimalghara.filedownloader.data.repository.DownloadRepositoryImpl
+import com.bimalghara.filedownloader.domain.model.ProgressData
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.notification.AppNotificationManager
 import com.bimalghara.filedownloader.notification.model.NotificationData
@@ -37,6 +39,8 @@ import javax.inject.Inject
 class DownloadService : Service() {
     private val logTag = "DownloadService"
 
+    @Inject
+    lateinit var dispatcherProviderSource: DispatcherProviderSource
     @Inject
     lateinit var downloadRepository: DownloadRepositoryImpl
     @Inject
@@ -345,7 +349,7 @@ class DownloadService : Service() {
         downloadRepository.cancelDownload(downloadId)
     }
 
-    private fun downloadFileFromNetwork(appContext:Context, downloadEntity: DownloadEntity) = coroutineScope.launch {
+    private fun downloadFileFromNetwork(appContext:Context, downloadEntity: DownloadEntity) = coroutineScope.launch(dispatcherProviderSource.io) {
         logs(logTag, "process download... id => ${downloadEntity.id}")
 
         if(fileCacheDir == null) {
@@ -401,67 +405,113 @@ class DownloadService : Service() {
                     notificationManager.cancelNotification(downloadId)
                 }
 
-                override fun onInfiniteProgressUpdate(downloadedData: String, downloadId: Int, name: String) {
-                    logs(logTag, "onInfiniteDownloadProgress() => $downloadedData, downloadId => $downloadId")
-                    val downloadSpeed = (downloadRepository.networkStatusLive.value?.second ?: 0L).toSpeed()
-                    val notificationData = NotificationData(
-                        id = downloadId,
-                        status = NotificationStatus.IN_PROGRESS,
-                        name = name,
-                        actionData = downloadedData,
-                        speed = downloadSpeed,
-                        isIndeterminate = true
-                    )
-                    notificationManager.showFileDownloadNotification(notificationData)
+                override fun onInfiniteProgressUpdate(downloadedSize: Long, downloadId: Int, name: String) {
+                    coroutineScope.launch(dispatcherProviderSource.io) {
+                        logs(
+                            logTag,
+                            "onInfiniteDownloadProgress() => $downloadedSize, downloadId => $downloadId"
+                        )
+                        val downloadSpeed =
+                            (downloadRepository.networkStatusLive.value?.second ?: 0L).toSpeed()
+                        val notificationData = NotificationData(
+                            id = downloadId,
+                            status = NotificationStatus.IN_PROGRESS,
+                            name = name,
+                            actionData = downloadedSize.toSize(" "),
+                            speed = downloadSpeed,
+                            isIndeterminate = true
+                        )
+                        val progressData = ProgressData(
+                            id = downloadId,
+                            actionData = downloadedSize.toSize(""),
+                            isIndeterminate = true
+                        )
+                        notificationManager.showFileDownloadNotification(notificationData)
+                        LocalMessageSender.sendMessageToForeground(
+                            context = appContext,
+                            progressData = progressData
+                        )
+                    }
                 }
 
                 override fun onProgressUpdate(progress: Int, downloadId: Int, name: String, totalSize: Long, downloadedSize: Long) {
-                    logs(logTag, "onProgressUpdate: $progress, downloadId => $downloadId, totalSize => $totalSize, downloadedSize => $downloadedSize")
-                    val downloadSpeed = (downloadRepository.networkStatusLive.value?.second ?: 0L).toSpeed()
-                    logs(logTag, "onProgressUpdate: downloadSpeed => $downloadSpeed")
-                    val eta = calculateETA((downloadRepository.networkStatusLive.value?.second ?: 0L), totalSize, downloadedSize)
-                    logs(logTag, "onProgressUpdate: eta => $eta")
-                    val actionData = "${downloadedSize.toSize()} of ${totalSize.toSize()}"
-                    val notificationData = NotificationData(
-                        id = downloadId,
-                        status = NotificationStatus.IN_PROGRESS,
-                        name = name,
-                        actionData = actionData,
-                        progress = progress,
-                        speed = downloadSpeed,
-                        eta = "$eta Left"
-                    )
-                    notificationManager.showFileDownloadNotification(notificationData)
-                    LocalMessageSender.sendMessageToForeground(context = appContext, notificationData = notificationData)
+                    coroutineScope.launch(dispatcherProviderSource.io) {
+                        logs(
+                            logTag,
+                            "onProgressUpdate: $progress, downloadId => $downloadId, totalSize => $totalSize, downloadedSize => $downloadedSize"
+                        )
+                        val downloadSpeed =
+                            (downloadRepository.networkStatusLive.value?.second ?: 0L).toSpeed()
+                        val eta = calculateETA(
+                            (downloadRepository.networkStatusLive.value?.second ?: 0L),
+                            totalSize,
+                            downloadedSize
+                        )
+                        val notificationData = NotificationData(
+                            id = downloadId,
+                            status = NotificationStatus.IN_PROGRESS,
+                            name = name,
+                            actionData = "${downloadedSize.toSize(" ")} of ${totalSize.toSize(" ")}",
+                            progress = progress,
+                            speed = downloadSpeed,
+                            eta = "$eta Left"
+                        )
+                        val progressData = ProgressData(
+                            id = downloadId,
+                            progress = progress,
+                            actionData = "${downloadedSize.toSize("")} / ${totalSize.toSize("")}"
+                        )
+                        notificationManager.showFileDownloadNotification(notificationData)
+                        LocalMessageSender.sendMessageToForeground(
+                            context = appContext,
+                            progressData = progressData
+                        )
+                    }
                 }
 
                 override fun onDownloadComplete(tmpPath: String, downloadId: Int) {
-                    logs(logTag, "onDownloadComplete: downloadId => $downloadId | tmpPath=>$tmpPath")
+                    coroutineScope.launch(dispatcherProviderSource.io) {
+                        logs(
+                            logTag,
+                            "onDownloadComplete: downloadId => $downloadId | tmpPath=>$tmpPath"
+                        )
 
-                    val targetDocumentFileUri: Uri? = Uri.parse(downloadEntity.destinationUri)
-                    val targetDocumentFile:DocumentFile? = targetDocumentFileUri?.let { DocumentFile.fromTreeUri(appContext, it) }
+                        val targetDocumentFileUri: Uri? = Uri.parse(downloadEntity.destinationUri)
+                        val targetDocumentFile: DocumentFile? =
+                            targetDocumentFileUri?.let { DocumentFile.fromTreeUri(appContext, it) }
 
-                    if(targetDocumentFile==null){
-                        logs(logTag, "onDownloadComplete: fail to open targetDocumentFile => ${downloadEntity.destinationUri}")
-                        return
-                    }
-
-                    val contentFile = targetDocumentFile.createFile(downloadEntity.mimeType, downloadEntity.name)
-                    if (contentFile != null && contentFile.exists()) {
-
-                        val fileCopied = copyFileToUri(baseContext, tmpPath, contentFile.uri)
-                        logs(logTag, "onDownloadComplete: copied result => $fileCopied")
-
-                        if (fileCopied.first) {
-
-                            downloadRepository.updateDownloadedFileUri(downloadId, fileCopied.second, contentFile.uri.toString())
-
-                            val tmpFile = File(tmpPath)
-                            if (tmpFile.exists()) tmpFile.delete()
+                        if (targetDocumentFile == null) {
+                            logs(
+                                logTag,
+                                "onDownloadComplete: fail to open targetDocumentFile => ${downloadEntity.destinationUri}"
+                            )
+                            return@launch
                         }
-                    } else logs(logTag, "onDownloadComplete: output file not created")
 
-                    notificationManager.cancelNotification(downloadId)
+                        val contentFile = targetDocumentFile.createFile(
+                            downloadEntity.mimeType,
+                            downloadEntity.name
+                        )
+                        if (contentFile != null && contentFile.exists()) {
+
+                            val fileCopied = copyFileToUri(baseContext, tmpPath, contentFile.uri)
+                            logs(logTag, "onDownloadComplete: copied result => $fileCopied")
+
+                            if (fileCopied.first) {
+
+                                downloadRepository.updateDownloadedFileUri(
+                                    downloadId,
+                                    fileCopied.second,
+                                    contentFile.uri.toString()
+                                )
+
+                                val tmpFile = File(tmpPath)
+                                if (tmpFile.exists()) tmpFile.delete()
+                            }
+                        } else logs(logTag, "onDownloadComplete: output file not created")
+
+                        notificationManager.cancelNotification(downloadId)
+                    }
                 }
 
                 override fun onDownloadFailed(errorMessage: String, downloadId: Int) {

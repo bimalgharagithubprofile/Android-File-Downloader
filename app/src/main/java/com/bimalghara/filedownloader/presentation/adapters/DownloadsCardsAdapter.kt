@@ -8,8 +8,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.databinding.ItemCardBinding
 import com.bimalghara.filedownloader.domain.model.DownloadItemState
-import com.bimalghara.filedownloader.notification.model.NotificationData
+import com.bimalghara.filedownloader.domain.model.ProgressData
 import com.bimalghara.filedownloader.presentation.base.OnRecyclerViewItemClick
+import com.bimalghara.filedownloader.utils.DownloadStatus
 import com.bimalghara.filedownloader.utils.Logger.logs
 import com.bimalghara.filedownloader.utils.RecyclerViewItemDecoration
 
@@ -34,14 +35,27 @@ class DownloadsCardsAdapter(
         notifyDataSetChanged()
     }
 
-    fun updateProgress(notificationData: NotificationData) {
+    fun updateProgress(progressData: ProgressData) {
         val itemState = dataSet.values.flatten().find { item ->
-            item.id == notificationData.id
+            item.id == progressData.id
         }
         itemState?.let {
-            it.tvProgress?.text = "${notificationData.progress}%"
-            it.progressIndicator?.setProgressCompat(notificationData.progress, true)
-            it.tvAction?.text = notificationData.actionData?:""
+            it.tvAction?.text = progressData.actionData?:""
+
+            if(!progressData.isIndeterminate)
+                it.tvProgress?.text = "${progressData.progress}%"
+
+            it.progressIndicator?.let{ progressIndicator ->
+                logs(logTag, "view isIndeterminate = ${progressIndicator.isIndeterminate}")
+                if(progressData.isIndeterminate){
+                    if(!progressIndicator.isIndeterminate) {
+                        progressIndicator.isIndeterminate = true
+                        itemState.progressIndicator = progressIndicator
+                    }
+                } else {
+                    progressIndicator.setProgressCompat(progressData.progress, true)
+                }
+            }
         }
     }
 
@@ -74,6 +88,7 @@ class DownloadsCardsAdapter(
                     this.adapter = downloadsAdapter
                     this.addItemDecoration(RecyclerViewItemDecoration(context, R.drawable.divider))
                 }
+                dataSet[itemDay]?.sortBy { it.downloadStatus == DownloadStatus.COMPLETED.name }
                 downloadsAdapter.differ.submitList(dataSet[itemDay])
             }
         }
