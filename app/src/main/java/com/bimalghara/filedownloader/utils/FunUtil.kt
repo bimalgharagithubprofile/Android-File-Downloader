@@ -114,6 +114,9 @@ object FunUtil {
     suspend fun wakeUpDownloadService(appContext: Context, action: String) {
         appContext.connectDownloadService()
         delay(2000)
+        refreshDownloadService(appContext, action)
+    }
+    suspend fun refreshDownloadService(appContext: Context, action: String) {
         LocalMessageSender.sendMessageToBackground(context = appContext, action = action)
     }
 

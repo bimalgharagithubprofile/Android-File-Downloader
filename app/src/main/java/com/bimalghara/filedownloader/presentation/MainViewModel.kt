@@ -88,8 +88,6 @@ class MainViewModel @Inject constructor(
                 val completeList = mutableMapOf<String, MutableList<DownloadItemState>>()
                 for ((date, records) in groupedRecords) {
                     val day = getDay(date)
-                    logs(logTag, "Date: $date [$day], Records: ${records[0]}")
-
                     val downloadItemState = records[0].toState()
                     if(completeList.containsKey(day)){
                         completeList[day]?.add(downloadItemState)
@@ -97,11 +95,6 @@ class MainViewModel @Inject constructor(
                         completeList[day] = mutableListOf(downloadItemState)
                     }
                 }
-                logs(logTag, "completeList: Days: ${completeList.keys}")
-                logs(logTag, "completeList: Today Downloads: ${completeList["Today"]?.size}")
-                logs(logTag, "completeList: Yesterday Downloads: ${completeList["Yesterday"]?.size}")
-                logs(logTag, "completeList: Today Downloads: ${completeList["28 06 2023"]?.size}")
-
                 _downloadsLiveData.postValue(ResourceWrapper.Success(data = completeList))
 
             } else _downloadsLiveData.postValue(ResourceWrapper.Error(context.getStringFromResource(R.string.no_downloads)))
@@ -167,6 +160,13 @@ class MainViewModel @Inject constructor(
         fileRepositorySource.reAddIntoQueue(context, data.id, restartDownloadEntity)
     }
 
+    fun pauseWaiting(downloadId: Int) = viewModelScope.launch(dispatcherProviderSource.io) {
+        fileRepositorySource.pauseFromQueue(downloadId)
+    }
+
+    /*fun resumePaused(context: Context, downloadId: Int) = viewModelScope.launch(dispatcherProviderSource.io) {
+        fileRepositorySource.resumePaused(context, downloadId)
+    }*/
 
     private suspend fun getNetworkStatus(): NetworkConnectivity.Status {
         val result = networkConnectivity.getStatus(dispatcherProviderSource.io)
@@ -178,6 +178,7 @@ class MainViewModel @Inject constructor(
         _fileDetailsLiveData.value = ResourceWrapper.None()
         _enqueueLiveData.value = ResourceWrapper.None()
     }
+
 
 
 }

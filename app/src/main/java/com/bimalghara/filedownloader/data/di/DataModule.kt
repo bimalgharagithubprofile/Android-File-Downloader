@@ -48,12 +48,14 @@ class DataModuleDataSources {
     fun provideFileRepository(
         dispatcherProviderSource: DispatcherProviderSource,
         serviceGenerator: ApiServiceGenerator,
-        db: AppDatabase
+        db: AppDatabase,
+        dataStoreSource: DataStoreSource
     ): FileRepositorySource {
         return FileRepositoryImpl(
             dispatcherProviderSource = dispatcherProviderSource,
             serviceGenerator = serviceGenerator,
-            downloadsDao = db.downloadsDao
+            downloadsDao = db.downloadsDao,
+            dataStoreSource = dataStoreSource
         )
     }
 

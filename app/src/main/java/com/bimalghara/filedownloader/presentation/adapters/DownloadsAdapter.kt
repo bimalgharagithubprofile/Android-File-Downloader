@@ -81,10 +81,11 @@ class DownloadsAdapter(
                         holder.binding.tvFromSeparator.toGone()
                     }
                     DownloadStatus.PAUSED.name -> {
-                        if(itemDownload.interruptedBy == InterruptedBy.NO_WIFI.name) {
+                        if(itemDownload.interruptedBy == InterruptedBy.NO_WIFI.name || itemDownload.interruptedBy == InterruptedBy.NO_NETWORK.name) {
                             holder.binding.ivIcon.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.item_pending))
-                            holder.binding.tvAction.text =
-                                context.getStringFromResource(R.string.error_waiting_for_wifi)
+                            holder.binding.tvAction.text = if(itemDownload.interruptedBy == InterruptedBy.NO_WIFI.name)
+                                context.getStringFromResource(R.string.error_waiting_for_wifi) else
+                                context.getStringFromResource(R.string.error_waiting_for_network)
                             holder.binding.progressIndicator.setIndicatorColor(ResourcesCompat.getColor(context.resources, R.color.orange, null))
                         } else {
                             holder.binding.ivIcon.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.item_play))

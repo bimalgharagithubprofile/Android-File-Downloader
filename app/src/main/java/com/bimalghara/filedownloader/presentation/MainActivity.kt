@@ -23,14 +23,13 @@ import com.bimalghara.filedownloader.databinding.ActivityMainBinding
 import com.bimalghara.filedownloader.domain.model.DownloadItemState
 import com.bimalghara.filedownloader.domain.model.FileDetails
 import com.bimalghara.filedownloader.domain.model.ProgressData
-import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
-import com.bimalghara.filedownloader.notification.model.NotificationData
 import com.bimalghara.filedownloader.presentation.adapters.DownloadsCardsAdapter
 import com.bimalghara.filedownloader.presentation.base.BaseActivity
 import com.bimalghara.filedownloader.presentation.base.OnRecyclerViewItemClick
 import com.bimalghara.filedownloader.utils.*
 import com.bimalghara.filedownloader.utils.FileUtil.protectedDirectories
 import com.bimalghara.filedownloader.utils.FileUtil.toSize
+import com.bimalghara.filedownloader.utils.FunUtil.wakeUpDownloadService
 import com.bimalghara.filedownloader.utils.Logger.logs
 import com.bimalghara.filedownloader.utils.permissions.PermissionManager
 import com.bimalghara.filedownloader.utils.permissions.Permissions
@@ -171,6 +170,15 @@ class MainActivity : BaseActivity() {
         LocalBroadcastManager.getInstance(this).registerReceiver(receiver, filter)
     }
 
+    override fun onPostResume() {
+        super.onPostResume()
+
+        //start service
+        lifecycleScope.launch() {
+            wakeUpDownloadService(this@MainActivity, action = NotificationAction.DOWNLOAD_START.name)
+        }
+    }
+
     override fun onStop() {
         super.onStop()
 
@@ -186,11 +194,14 @@ class MainActivity : BaseActivity() {
                         //remove from database & the file
                     } else {
                         when(data.downloadStatus) {
+                            DownloadStatus.WAITING.name -> {
+                                viewModel.pauseWaiting(data.id)
+                            }
                             DownloadStatus.DOWNLOADING.name -> {
-
+                                LocalMessageSender.sendMessageToBackground(this@MainActivity, action = NotificationAction.DOWNLOAD_PAUSE.name, downloadId = data.id)
                             }
                             DownloadStatus.PAUSED.name -> {
-
+                                LocalMessageSender.sendMessageToBackground(this@MainActivity, action = NotificationAction.DOWNLOAD_RESUME.name, downloadId = data.id)
                             }
                             DownloadStatus.FAILED.name -> {
                                 viewModel.reAddIntoQueue(this@MainActivity, data)

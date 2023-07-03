@@ -27,8 +27,11 @@ interface FileRepositorySource {
         restartDownloadEntity: DownloadEntity
     )
 
-    fun requestDownloadsFromLocal(): Flow<List<DownloadEntity>>
+    suspend fun pauseFromQueue(downloadId: Int)
 
+//    suspend fun resumePaused(appContext: Context, downloadId: Int)
+
+    fun requestDownloadsFromLocal(): Flow<List<DownloadEntity>>
     suspend fun requestFileDetailsFromNetwork(appContext: Context, url: String): Flow<ResourceWrapper<FileDetails>>
 
 

@@ -27,6 +27,7 @@
     <string name="error_failed_to_download">Failed to download</string>
     <string name="error_paused_download">Download paused</string>
     <string name="error_waiting_for_wifi">Waiting for WiFi</string>
+    <string name="error_waiting_for_network">Waiting for Network</string>
     <string name="error_waiting_in_queue">Waiting in queue</string>
 
 

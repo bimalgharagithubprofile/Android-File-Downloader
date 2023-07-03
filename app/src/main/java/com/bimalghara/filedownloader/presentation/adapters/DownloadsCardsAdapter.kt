@@ -40,11 +40,9 @@ class DownloadsCardsAdapter(
             item.id == progressData.id
         }
         itemState?.let {
+            itemState.lastProgress = progressData.progress
             it.tvAction?.text = progressData.actionData?:""
-
-            if(!progressData.isIndeterminate)
-                it.tvProgress?.text = "${progressData.progress}%"
-
+            if(!progressData.isIndeterminate) it.tvProgress?.text = "${progressData.progress}%"
             it.progressIndicator?.let{ progressIndicator ->
                 logs(logTag, "view isIndeterminate = ${progressIndicator.isIndeterminate}")
                 if(progressData.isIndeterminate){
