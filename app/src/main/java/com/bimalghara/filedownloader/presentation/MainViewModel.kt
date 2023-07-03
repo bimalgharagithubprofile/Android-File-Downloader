@@ -13,6 +13,7 @@ import com.bimalghara.filedownloader.data.local.preferences.DataStoreSource
 import com.bimalghara.filedownloader.domain.mapper.toState
 import com.bimalghara.filedownloader.domain.model.DownloadItemState
 import com.bimalghara.filedownloader.domain.model.FileDetails
+import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.domain.repository.FileRepositorySource
 import com.bimalghara.filedownloader.utils.*
 import com.bimalghara.filedownloader.utils.FunUtil.convertTimestampToLocalDate
@@ -151,6 +152,21 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun reAddIntoQueue(context: Context, data: DownloadItemState) = viewModelScope.launch(dispatcherProviderSource.io) {
+        val restartDownloadEntity = DownloadEntity(
+            url = data.url,
+            wifiOnly = data.wifiOnly,
+            destinationUri = data.destinationUri,
+            name = data.name,
+            mimeType = data.mimeType,
+            size = data.size,
+            supportRange = data.supportRange,
+            downloadStatus = DownloadStatus.WAITING.name,
+            updatedAt = System.currentTimeMillis()
+        )
+        fileRepositorySource.reAddIntoQueue(context, data.id, restartDownloadEntity)
+    }
+
 
     private suspend fun getNetworkStatus(): NetworkConnectivity.Status {
         val result = networkConnectivity.getStatus(dispatcherProviderSource.io)
@@ -162,7 +178,6 @@ class MainViewModel @Inject constructor(
         _fileDetailsLiveData.value = ResourceWrapper.None()
         _enqueueLiveData.value = ResourceWrapper.None()
     }
-
 
 
 }

@@ -4,15 +4,21 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.bimalghara.filedownloader.utils.DownloadStatus
 import com.google.android.material.progressindicator.LinearProgressIndicator
 
+
+
+
 /**
  * Created by BimalGhara
  */
 data class DownloadItemState(
     var id: Int = 0,
     var url: String,
+    var wifiOnly: Boolean = true,
+    var destinationUri: String,//string uri
     var name: String,
     var mimeType: String,
     var size: Long=0,
+    var supportRange: Boolean=false,
     var downloadStatus: String = DownloadStatus.WAITING.name,
     var lastProgress: Int = 0,
     var interruptedBy: String?=null,

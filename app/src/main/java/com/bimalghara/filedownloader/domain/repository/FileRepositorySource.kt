@@ -21,6 +21,12 @@ interface FileRepositorySource {
         destinationUri: Uri
     ): ResourceWrapper<Boolean>
 
+    suspend fun reAddIntoQueue(
+        appContext: Context,
+        existingId: Int,
+        restartDownloadEntity: DownloadEntity
+    )
+
     fun requestDownloadsFromLocal(): Flow<List<DownloadEntity>>
 
     suspend fun requestFileDetailsFromNetwork(appContext: Context, url: String): Flow<ResourceWrapper<FileDetails>>

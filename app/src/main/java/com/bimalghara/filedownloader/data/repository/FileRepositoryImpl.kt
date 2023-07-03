@@ -75,6 +75,21 @@ class FileRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun reAddIntoQueue(
+        appContext: Context,
+        existingId: Int,
+        restartDownloadEntity: DownloadEntity
+    ) {
+
+        val id = downloadsDao.addDownload(restartDownloadEntity)
+        if(id > 0) {
+            downloadsDao.deleteDownload(existingId)
+
+            //start service
+            wakeUpDownloadService(appContext, action = NotificationAction.DOWNLOAD_START.name)
+        }
+
+    }
 
     override fun requestDownloadsFromLocal(): Flow<List<DownloadEntity>> {
         return downloadsDao.getDownloads().flowOn(dispatcherProviderSource.io)

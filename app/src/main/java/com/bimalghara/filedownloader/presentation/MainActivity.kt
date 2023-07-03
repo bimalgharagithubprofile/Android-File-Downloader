@@ -182,7 +182,21 @@ class MainActivity : BaseActivity() {
             it.setOnItemClickListener(object : OnRecyclerViewItemClick<DownloadItemState, Boolean> {
                 override fun onItemClick(data: DownloadItemState, isCanceled: Boolean) {
                     Log.e(logTag, "Adapter::onItemClick -> isCanceled:$isCanceled | data:$data")
+                    if(isCanceled){
+                        //remove from database & the file
+                    } else {
+                        when(data.downloadStatus) {
+                            DownloadStatus.DOWNLOADING.name -> {
 
+                            }
+                            DownloadStatus.PAUSED.name -> {
+
+                            }
+                            DownloadStatus.FAILED.name -> {
+                                viewModel.reAddIntoQueue(this@MainActivity, data)
+                            }
+                        }
+                    }
                 }
             })
         }

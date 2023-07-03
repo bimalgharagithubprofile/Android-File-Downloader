@@ -121,7 +121,7 @@ class DownloadRepositoryImpl @Inject constructor(
                 }
             } catch (e: Exception) {
                 delay(100)
-                if (networkStatusLive.value?.first != NetworkConnectivity.Status.WIFI || networkStatusLive.value?.first != NetworkConnectivity.Status.CELLULAR) {
+                if (networkStatusLive.value?.first == NetworkConnectivity.Status.Lost) {
                     logs(logTag, "Download broke WiFi lost: ${e.message} [${networkStatusLive.value}]")
                     updateDownloadPaused(downloadEntity.id, 1, InterruptedBy.NO_WIFI)
                     callback.onDownloadPaused(downloadEntity.id, 1, downloadEntity.name)
@@ -262,7 +262,7 @@ class DownloadRepositoryImpl @Inject constructor(
             callback.onDownloadComplete(tmpPath, downloadEntity.id)
         } catch (e: IOException) {
             delay(100)
-            if (networkStatusLive.value?.first != NetworkConnectivity.Status.WIFI || networkStatusLive.value?.first != NetworkConnectivity.Status.CELLULAR) {
+            if (networkStatusLive.value?.first == NetworkConnectivity.Status.Lost) {
                 logs(logTag, "WiFi lost: ${e.message} [${networkStatusLive.value}]")
                 updateDownloadPaused(downloadEntity.id, lastProgress, InterruptedBy.NO_WIFI)
                 callback.onDownloadPaused(downloadEntity.id, lastProgress, downloadEntity.name)

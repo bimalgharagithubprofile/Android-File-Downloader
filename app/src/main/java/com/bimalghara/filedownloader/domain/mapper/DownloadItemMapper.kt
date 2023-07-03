@@ -7,9 +7,12 @@ fun DownloadEntity.toState() : DownloadItemState {
     return DownloadItemState(
         id = id,
         url = url,
+        wifiOnly = wifiOnly,
+        destinationUri = destinationUri,
         name = name,
         mimeType = mimeType,
         size = size,
+        supportRange = supportRange,
         downloadStatus = downloadStatus,
         lastProgress = lastProgress,
         interruptedBy = interruptedBy,
