@@ -3,24 +3,28 @@ package com.bimalghara.filedownloader.broadcast
 import android.content.Context
 import android.content.Intent
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.bimalghara.filedownloader.notification.model.NotificationData
 
-class LocalMessageSender(private val mContext: Context?) {
+object LocalMessageSender {
 
-    private var messageIntent: Intent? = null
+    fun sendMessageToBackground(context: Context, action: String, downloadId: Int? = null) {
+        val messageIntent = Intent("${context.packageName}.NOTIFICATION_BROAD_CAST")
 
-    init {
-        messageIntent = Intent("${mContext?.packageName}.NOTIFICATION_BROAD_CAST")
+        messageIntent.putExtra("action", action)
+        messageIntent.putExtra("DOWNLOAD_ID", downloadId)
+
+        LocalBroadcastManager.getInstance(context).sendBroadcast(messageIntent)
+
     }
 
-    fun sendMessage(action: String, downloadId: Int? = null) {
+    fun sendMessageToForeground(context: Context, notificationData: NotificationData) {
+        //only if app is in foreground
 
-        if (messageIntent != null && mContext != null) {
+        val messageIntent = Intent("${context.packageName}.NOTIFICATION_BROAD_CAST")
 
-            messageIntent?.putExtra("action", action)
-            messageIntent?.putExtra("DOWNLOAD_ID", downloadId)
+        messageIntent.putExtra("NOTIFICATION_DATA", notificationData)
 
-            LocalBroadcastManager.getInstance(mContext).sendBroadcast(messageIntent!!)
-        }
+        LocalBroadcastManager.getInstance(context).sendBroadcast(messageIntent)
 
     }
 }

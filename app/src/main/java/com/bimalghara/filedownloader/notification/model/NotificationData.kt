@@ -1,7 +1,10 @@
 package com.bimalghara.filedownloader.notification.model
 
+import android.os.Parcelable
 import com.bimalghara.filedownloader.utils.NotificationStatus
+import kotlinx.android.parcel.Parcelize
 
+@Parcelize
 data class NotificationData(
     var id:Int,
     var status: NotificationStatus,
@@ -11,4 +14,4 @@ data class NotificationData(
     var speed:String?=null,
     var eta:String?=null,
     var isIndeterminate: Boolean = false
-)
+) : Parcelable

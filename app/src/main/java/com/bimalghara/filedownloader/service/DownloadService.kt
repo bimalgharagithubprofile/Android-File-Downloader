@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import androidx.documentfile.provider.DocumentFile
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.bimalghara.filedownloader.R
+import com.bimalghara.filedownloader.broadcast.LocalMessageSender
 import com.bimalghara.filedownloader.data.local.preferences.DataStoreSource
 import com.bimalghara.filedownloader.data.network.DownloadCallback
 import com.bimalghara.filedownloader.data.repository.DownloadRepositoryImpl
@@ -369,7 +370,7 @@ class DownloadService : Service() {
 
                 override fun onDownloadStarted(initialProgress: Int, downloadId: Int, name: String) {
                     logs(logTag, "onDownloadStarted() => progress => $initialProgress, downloadId => $downloadId")
-                    notificationManager?.cancelNotification(downloadId)
+                    notificationManager.cancelNotification(downloadId)
                     val downloadSpeed = (downloadRepository.networkStatusLive.value?.second ?: 0L).toSpeed()
                     val notificationData = NotificationData(
                         id = downloadId,
@@ -378,12 +379,12 @@ class DownloadService : Service() {
                         progress = initialProgress,
                         speed = downloadSpeed
                     )
-                    notificationManager?.showFileDownloadNotification(notificationData)
+                    notificationManager.showFileDownloadNotification(notificationData)
                 }
 
                 override fun onDownloadPaused(downloadId: Int, lastProgress: Int, name: String) {
                     logs(logTag, "onDownloadPaused() => downloadId => $downloadId")
-                    notificationManager?.cancelNotification(downloadId)
+                    notificationManager.cancelNotification(downloadId)
                     val isIndeterminate = lastProgress <= 0
                     val notificationData = NotificationData(
                         id = downloadId,
@@ -392,12 +393,12 @@ class DownloadService : Service() {
                         progress = lastProgress,
                         isIndeterminate = isIndeterminate
                     )
-                    notificationManager?.showFileDownloadNotification(notificationData)
+                    notificationManager.showFileDownloadNotification(notificationData)
                 }
 
                 override fun onDownloadCancelled(downloadId: Int) {
                     logs(logTag, "onDownloadCancelled() => downloadId => $downloadId")
-                    notificationManager?.cancelNotification(downloadId)
+                    notificationManager.cancelNotification(downloadId)
                 }
 
                 override fun onInfiniteProgressUpdate(downloadedData: String, downloadId: Int, name: String) {
@@ -411,7 +412,7 @@ class DownloadService : Service() {
                         speed = downloadSpeed,
                         isIndeterminate = true
                     )
-                    notificationManager?.showFileDownloadNotification(notificationData)
+                    notificationManager.showFileDownloadNotification(notificationData)
                 }
 
                 override fun onProgressUpdate(progress: Int, downloadId: Int, name: String, totalSize: Long, downloadedSize: Long) {
@@ -430,7 +431,8 @@ class DownloadService : Service() {
                         speed = downloadSpeed,
                         eta = "$eta Left"
                     )
-                    notificationManager?.showFileDownloadNotification(notificationData)
+                    notificationManager.showFileDownloadNotification(notificationData)
+                    LocalMessageSender.sendMessageToForeground(context = appContext, notificationData = notificationData)
                 }
 
                 override fun onDownloadComplete(tmpPath: String, downloadId: Int) {
@@ -459,12 +461,12 @@ class DownloadService : Service() {
                         }
                     } else logs(logTag, "onDownloadComplete: output file not created")
 
-                    notificationManager?.cancelNotification(downloadId)
+                    notificationManager.cancelNotification(downloadId)
                 }
 
                 override fun onDownloadFailed(errorMessage: String, downloadId: Int) {
                     logs(logTag, "onDownloadFailed: $errorMessage, downloadId => $downloadId")
-                    notificationManager?.cancelNotification(downloadId)
+                    notificationManager.cancelNotification(downloadId)
                 }
             })
         } else{

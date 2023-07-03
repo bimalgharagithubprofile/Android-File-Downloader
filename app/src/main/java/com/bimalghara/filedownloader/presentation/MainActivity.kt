@@ -1,7 +1,10 @@
 package com.bimalghara.filedownloader.presentation
 
 import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -12,12 +15,14 @@ import androidx.activity.viewModels
 import androidx.appcompat.widget.PopupMenu
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bimalghara.filedownloader.R
 import com.bimalghara.filedownloader.broadcast.LocalMessageSender
 import com.bimalghara.filedownloader.databinding.ActivityMainBinding
 import com.bimalghara.filedownloader.domain.model.FileDetails
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
+import com.bimalghara.filedownloader.notification.model.NotificationData
 import com.bimalghara.filedownloader.presentation.adapters.DownloadsCardsAdapter
 import com.bimalghara.filedownloader.presentation.base.BaseActivity
 import com.bimalghara.filedownloader.presentation.base.OnRecyclerViewItemClick
@@ -50,6 +55,26 @@ class MainActivity : BaseActivity() {
     private var bottomSheetSettings: BottomSheetBehavior<FrameLayout>?=null
     private var bottomSheetAddNew: BottomSheetBehavior<FrameLayout>?=null
 
+    private lateinit var downloadsCardsAdapter: DownloadsCardsAdapter
+
+    private val receiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+
+            val notificationData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                intent?.getParcelableExtra("NOTIFICATION_DATA", NotificationData::class.java)
+            else
+                @Suppress("DEPRECATION") intent?.getParcelableExtra("NOTIFICATION_DATA") as? NotificationData?
+
+            if(notificationData != null){
+                logs(logTag, "receiving NotificationData: ${notificationData.progress}")
+
+                //downloadsCardsAdapter.updateDataSet()
+            } else {
+                logs(logTag, "receiving broken Parcelable!")
+            }
+        }
+    }
+
     private val startActivityForDirectoryPickUp =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -68,7 +93,12 @@ class MainActivity : BaseActivity() {
             }
         }
 
-    private lateinit var downloadsCardsAdapter: DownloadsCardsAdapter
+
+    private fun startActivityDirectoryPickUp() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+        startActivityForDirectoryPickUp.launch(intent)
+    }
+
 
     override fun initViewBinding() {
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -134,11 +164,15 @@ class MainActivity : BaseActivity() {
     override fun onStart() {
         super.onStart()
         viewModel.getUsersDataFromCached(this)
+
+        val filter = IntentFilter("${baseContext?.packageName}.NOTIFICATION_BROAD_CAST")
+        LocalBroadcastManager.getInstance(this).registerReceiver(receiver, filter)
     }
 
-    private fun startActivityDirectoryPickUp() {
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-        startActivityForDirectoryPickUp.launch(intent)
+    override fun onStop() {
+        super.onStop()
+
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver)
     }
 
     private fun setupDownloadsRecyclerview() {
@@ -234,11 +268,11 @@ class MainActivity : BaseActivity() {
         popupMenu.setOnMenuItemClickListener {
             when(it.itemId) {
                 R.id.action_pause_all -> {
-                    LocalMessageSender(this).sendMessage(action = NotificationAction.DOWNLOAD_PAUSE_ALL.name)
+                    LocalMessageSender.sendMessageToBackground(context = this, action = NotificationAction.DOWNLOAD_PAUSE_ALL.name)
                     true
                 }
                 R.id.action_resume_all -> {
-                    LocalMessageSender(this).sendMessage(action = NotificationAction.DOWNLOAD_RESUME_ALL.name)
+                    LocalMessageSender.sendMessageToBackground(context = this, action = NotificationAction.DOWNLOAD_RESUME_ALL.name)
                     true
                 }
                 R.id.action_settings -> {
