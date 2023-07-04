@@ -65,6 +65,7 @@ object AppNotificationManager {
                 .setOngoing(true)
                 .setCustomContentView(notificationLayoutSmall)
                 .setCustomBigContentView(notificationLayoutSmallLarge)
+                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .build()
 
             val notificationManager = NotificationManagerCompat.from(context)
@@ -167,10 +168,6 @@ object AppNotificationManager {
             }
         }
         return null
-    }
-
-    fun cancelAllNotifications(){
-        notificationManager?.cancelAll()
     }
 
     fun cancelNotification(notificationId: Int){

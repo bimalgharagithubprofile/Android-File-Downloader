@@ -14,6 +14,7 @@ import android.view.View
 import android.widget.FrameLayout
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.PopupMenu
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
@@ -316,7 +317,8 @@ class MainActivity : BaseActivity() {
     }
 
     private fun popupMenu() {
-        val popupMenu = PopupMenu(this, binding.ivMenu)
+        val wrapper: Context = ContextThemeWrapper(this, R.style.popupMenuStyle)
+        val popupMenu = PopupMenu(wrapper, binding.ivMenu)
         popupMenu.inflate(R.menu.main_menu)
         popupMenu.setOnMenuItemClickListener {
             when(it.itemId) {

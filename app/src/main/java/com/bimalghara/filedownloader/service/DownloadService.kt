@@ -51,9 +51,6 @@ class DownloadService : Service() {
 
     private var notificationManager = AppNotificationManager
 
-    //private var fileCacheDir:File?=null
-
-
     private val job = SupervisorJob()
     private val coroutineScope = CoroutineScope(Dispatchers.IO + job)
 
@@ -106,8 +103,6 @@ class DownloadService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-
-        //fileCacheDir = File(noBackupFilesDir?.path + "/downloads")
 
         notificationManager = AppNotificationManager.from(this)
 
@@ -432,19 +427,6 @@ class DownloadService : Service() {
         } else {
             notificationManager.cancelNotification(downloadId)
         }
-        /*val openQueuedList = downloadRepository.getOpenQueuedList()
-        val pausedQueuedItem = openQueuedList.filter { it.id == downloadId }.singleOrNull()
-        if(pausedQueuedItem != null) {
-            if(pausedQueuedItem.wifiOnly){
-                if(downloadRepository.networkStatusLive.value?.first == NetworkConnectivity.Status.WIFI){
-                    downloadFileFromNetwork(this@DownloadService, pausedQueuedItem)
-                } else logs(logTag, "resume: User: Failed - no wifi [${downloadRepository.networkStatusLive.value?.first}]")
-            } else {
-                if(downloadRepository.networkStatusLive.value?.first == NetworkConnectivity.Status.WIFI || downloadRepository.networkStatusLive.value?.first == NetworkConnectivity.Status.CELLULAR) {
-                    downloadFileFromNetwork(this@DownloadService, pausedQueuedItem)
-                } else logs(logTag, "resume: User: Failed - no network [${downloadRepository.networkStatusLive.value?.first}]")
-            }
-        }*/
     }
     private fun actionPause(downloadId: Int) = coroutineScope.launch {
         downloadRepository.pauseDownload(downloadId)
