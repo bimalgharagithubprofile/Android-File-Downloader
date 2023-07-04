@@ -100,7 +100,7 @@ object FunUtil {
     }
     private fun formatETA(eta: Long): String {
         return when {
-            eta < 0 -> "N/A"
+            eta < 0 -> "0"
             eta < 60 -> "00:${eta}"
             eta < 3600 -> "${eta / 60}:${eta % 60}"
             else -> {
