@@ -60,6 +60,7 @@
                     android:elevation="0dp"
                     android:stateListAnimator="@null"
                     android:gravity="center"
+                    android:textAlignment="center"
                     android:text="@string/add"
                     android:textAllCaps="false"
                     android:textColor="@color/white"
