@@ -273,6 +273,7 @@
         android:id="@+id/cbDownloadOverWiFi"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:theme="@style/checkBoxStyle"
         app:layout_constraintEnd_toEndOf="@+id/lbDownloadOverWiFi"
         app:layout_constraintTop_toTopOf="@+id/lbDownloadOverWiFi"
         app:layout_constraintBottom_toBottomOf="@+id/lbDownloadOverWiFi"

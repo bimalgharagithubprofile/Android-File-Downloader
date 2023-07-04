@@ -16,12 +16,16 @@
     </style>
     <style name="ShapeAppearance.Material3.Tooltip" parent="ShapeAppearance.Material3.Corner.Large"/>
 
+    <style name="checkBoxStyle" parent="Base.Theme.AppCompat">
+        <item name="colorAccent">@color/purple</item>
+        <item name="android:textColorSecondary">@color/purple</item>
+    </style>
 
     <style name="popupMenuStyle" parent="Widget.AppCompat.PopupMenu">
         <item name="popupMenuStyle">@style/MyApp.PopupMenu</item>
         <item name="android:textColor">@color/text_title</item>
     </style>
     <style name="MyApp.PopupMenu" parent="Widget.AppCompat.PopupMenu">
-        <item name="android:popupBackground">@color/white</item>
+        <item name="android:popupBackground">@drawable/popupmenu_background</item>
     </style>
 </resources>
