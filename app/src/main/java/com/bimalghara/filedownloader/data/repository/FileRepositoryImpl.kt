@@ -1,5 +1,6 @@
 package com.bimalghara.filedownloader.data.repository
 
+import android.app.NotificationManager
 import android.content.Context
 import android.net.Uri
 import com.bimalghara.filedownloader.R
@@ -12,8 +13,9 @@ import com.bimalghara.filedownloader.data.network.retrofit.service.ApiServiceDow
 import com.bimalghara.filedownloader.domain.model.FileDetails
 import com.bimalghara.filedownloader.domain.model.entity.DownloadEntity
 import com.bimalghara.filedownloader.domain.repository.FileRepositorySource
+import com.bimalghara.filedownloader.notification.AppNotificationManager
 import com.bimalghara.filedownloader.utils.*
-import com.bimalghara.filedownloader.utils.FileUtil.deleteOutputFile
+import com.bimalghara.filedownloader.utils.FileUtil.deleteDownloadedFile
 import com.bimalghara.filedownloader.utils.FileUtil.deleteTmpFile
 import com.bimalghara.filedownloader.utils.FileUtil.getMimeType
 import com.bimalghara.filedownloader.utils.FunUtil.createFileDetailsFromHeaders
@@ -113,12 +115,14 @@ class FileRepositoryImpl @Inject constructor(
                 LocalMessageSender.sendMessageToBackground(context, action = NotificationAction.DOWNLOAD_CANCEL.name, downloadId = downloadId)
             }
             DownloadStatus.COMPLETED.name -> {
-                deleteOutputFile(context, downloadId)
+                deleteDownloadedFile(context, downloadsDao, downloadId)
                 downloadsDao.deleteDownload(downloadId)
             }
             else -> {
                 deleteTmpFile(context, downloadsDao, downloadId)
                 downloadsDao.deleteDownload(downloadId)
+                val appNotificationManager = AppNotificationManager.from(context)
+                appNotificationManager.cancelNotification(downloadId)
             }
         }
     }

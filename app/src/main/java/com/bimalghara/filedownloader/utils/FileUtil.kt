@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.webkit.MimeTypeMap
+import androidx.documentfile.provider.DocumentFile
 import com.bimalghara.filedownloader.data.local.database.DownloadsDao
 import com.bimalghara.filedownloader.utils.Logger.logs
 import java.io.*
@@ -150,8 +151,19 @@ object FileUtil {
         }
     }
 
-    suspend fun deleteOutputFile(context: Context, downloadId: Int) {
-
+    fun deleteDownloadedFile(context: Context, downloadsDao: DownloadsDao, downloadId: Int) {
+        try {
+            val downloadedFileUri = downloadsDao.getDownloadedFileUri(downloadId)
+            if(downloadedFileUri!=null){
+                val targetDocumentFileUri: Uri? = Uri.parse(downloadedFileUri)
+                targetDocumentFileUri?.let {
+                    val documentFile = DocumentFile.fromSingleUri(context, it)
+                    if(documentFile?.exists() == true) documentFile.delete()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
 }

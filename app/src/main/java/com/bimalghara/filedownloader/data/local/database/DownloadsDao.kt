@@ -18,6 +18,9 @@ interface DownloadsDao {
     @Query("SELECT name FROM DownloadEntity WHERE id=:id")
     fun getName(id: Int): String
 
+    @Query("SELECT downloadedFileUri FROM DownloadEntity WHERE id=:id")
+    fun getDownloadedFileUri(id: Int): String?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun addDownload(item: DownloadEntity): Long
 
