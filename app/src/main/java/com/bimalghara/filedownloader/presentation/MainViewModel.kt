@@ -135,12 +135,14 @@ class MainViewModel @Inject constructor(
         } else if(_selectedPathLiveData.value?.uri?.path.isNullOrEmpty()) {
             _errorSingleEvent.postValue(SingleEvent(context.getStringFromResource(R.string.error_invalid_destination_path)))
         } else {
+            _enqueueLiveData.postValue(ResourceWrapper.Loading())
 
             val newFIleDetails = _fileDetailsLiveData.value!!.data!!.also {
                 it.fileName = newName.toString()
             }
 
             val response = fileRepositorySource.addQueue(context, wifiOnly, newFIleDetails, _selectedPathLiveData.value!!.uri)
+
             _enqueueLiveData.postValue(response)
         }
     }

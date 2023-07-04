@@ -287,7 +287,7 @@ class MainActivity : BaseActivity() {
             logs(logTag, "observe fileDetailsLiveData | $it")
             when (it) {
                 is ResourceWrapper.Loading -> {
-                    setGrabbingInfo()
+                    setLoader(getStringFromResource(R.string.grabbing_info))
                 }
                 is ResourceWrapper.Success -> {
                     setEnqueue(it.data)
@@ -301,13 +301,16 @@ class MainActivity : BaseActivity() {
         observe(viewModel.enqueueLiveData) {
             logs(logTag, "observe enqueueLiveData | $it")
             when (it) {
+                is ResourceWrapper.Loading -> {
+                    setLoader(getStringFromResource(R.string.adding))
+                }
                 is ResourceWrapper.Success -> {
                     setSuccess()
                 }
                 is ResourceWrapper.Error -> {
                     setFailed(it.error)
                 }
-                else -> Unit
+                else -> setFailed(it.error)
             }
         }
     }
@@ -368,7 +371,7 @@ class MainActivity : BaseActivity() {
     private fun setAddNew() {
         binding.addNewSheet.groupHeader.toVisible()
         binding.addNewSheet.groupAddNew.toVisible()
-        binding.addNewSheet.groupGrabbingInfo.toGone()
+        binding.addNewSheet.groupLoader.toGone()
         binding.addNewSheet.groupEnqueue.toGone()
         binding.addNewSheet.groupSuccess.toGone()
         binding.addNewSheet.groupFailed.toGone()
@@ -386,10 +389,11 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    private fun setGrabbingInfo() {
+    private fun setLoader(message:String) {
         binding.addNewSheet.groupHeader.toGone()
         binding.addNewSheet.groupAddNew.toGone()
-        binding.addNewSheet.groupGrabbingInfo.toVisible()
+        binding.addNewSheet.groupLoader.toVisible()
+        binding.addNewSheet.tvLoader.text = message
         binding.addNewSheet.groupEnqueue.toGone()
         binding.addNewSheet.groupSuccess.toGone()
         binding.addNewSheet.groupFailed.toGone()
@@ -398,7 +402,7 @@ class MainActivity : BaseActivity() {
     private fun setEnqueue(fileDetails: FileDetails?) {
         binding.addNewSheet.groupHeader.toVisible()
         binding.addNewSheet.groupAddNew.toGone()
-        binding.addNewSheet.groupGrabbingInfo.toGone()
+        binding.addNewSheet.groupLoader.toGone()
         binding.addNewSheet.groupEnqueue.toVisible()
         binding.addNewSheet.groupSuccess.toGone()
         binding.addNewSheet.groupFailed.toGone()
@@ -450,7 +454,7 @@ class MainActivity : BaseActivity() {
     private fun setSuccess() {
         binding.addNewSheet.groupHeader.toGone()
         binding.addNewSheet.groupAddNew.toGone()
-        binding.addNewSheet.groupGrabbingInfo.toGone()
+        binding.addNewSheet.groupLoader.toGone()
         binding.addNewSheet.groupEnqueue.toGone()
         binding.addNewSheet.groupSuccess.toVisible()
         binding.addNewSheet.groupFailed.toGone()
@@ -465,7 +469,7 @@ class MainActivity : BaseActivity() {
     private fun setFailed(error: String?) {
         binding.addNewSheet.groupHeader.toGone()
         binding.addNewSheet.groupAddNew.toGone()
-        binding.addNewSheet.groupGrabbingInfo.toGone()
+        binding.addNewSheet.groupLoader.toGone()
         binding.addNewSheet.groupEnqueue.toGone()
         binding.addNewSheet.groupSuccess.toGone()
         binding.addNewSheet.groupFailed.toVisible()

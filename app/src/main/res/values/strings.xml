@@ -47,6 +47,7 @@
     <string name="add_new_download">Add New Download</string>
     <string name="enter_link">Enter Link</string>
     <string name="grabbing_info">Grabbing Info…</string>
+    <string name="adding">Adding…</string>
     <string name="file_name">File Name</string>
     <string name="destination_folder">Destination Folder</string>
     <string name="download_over_wi_fi_only">Download over Wi-Fi only</string>

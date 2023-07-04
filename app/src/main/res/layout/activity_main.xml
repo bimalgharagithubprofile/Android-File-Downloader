@@ -57,6 +57,8 @@
                     app:layout_constraintBottom_toBottomOf="parent"
                     android:layout_marginEnd="@dimen/_6sdp"
                     android:background="@drawable/button_primary"
+                    android:elevation="0dp"
+                    android:stateListAnimator="@null"
                     android:gravity="center"
                     android:text="@string/add"
                     android:textAllCaps="false"
