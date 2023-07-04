@@ -376,7 +376,7 @@ class MainActivity : BaseActivity() {
         binding.addNewSheet.groupSuccess.toGone()
         binding.addNewSheet.groupFailed.toGone()
 
-        //binding.addNewSheet.etLink.setText("")//eeeeeeeeeee
+        binding.addNewSheet.etLink.setText("")
 
         binding.addNewSheet.btnClearLink.setOnClickListener {
             binding.addNewSheet.etLink.setText("")

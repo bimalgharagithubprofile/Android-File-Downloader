@@ -91,7 +91,6 @@
         android:layout_height="@dimen/input_height"
         android:layout_marginTop="@dimen/_13sdp"
         android:background="@drawable/edit_text"
-        android:text="http://167.99.95.99/a/100.bin"
         android:ellipsize="end"
         android:fontFamily="@font/plus_jakarta_sans_semi_bold"
         android:gravity="center_vertical"
