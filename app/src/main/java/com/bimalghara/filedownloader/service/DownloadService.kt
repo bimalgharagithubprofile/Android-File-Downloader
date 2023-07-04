@@ -306,7 +306,7 @@ class DownloadService : Service() {
                         logs(logTag, "slot-available: 0 Downloading: ${downloadingQueuedItems.size} waiting-in-queue: ${waitingQueuedItems.size} waiting-for-wifi: ${wifiInterruptedItems.size}")
                         availableParallelDownload = 0
                     } else {
-                        availableParallelDownload = availableParallelDownload.minus(totInProgress)
+                        availableParallelDownload = availableParallelDownload.minus(wifiInterruptedItems.size)
                         if(availableParallelDownload<0) availableParallelDownload=0
                         logs(logTag, "slot-available: $availableParallelDownload already downloading: ${downloadingQueuedItems.size} already waiting-in-queue: ${waitingQueuedItems.size} already waiting-for-wifi: ${wifiInterruptedItems.size}")
                     }
@@ -507,11 +507,12 @@ class DownloadService : Service() {
                 override fun onDownloadCancelled(downloadId: Int) {
                     coroutineScope.launch(dispatcherProviderSource.io) {
                         logs(logTag, "onDownloadCancelled() => downloadId => $downloadId")
-                        notificationManager.cancelNotification(downloadId)
                         refreshDownloadService(
                             appContext = appContext,
                             action = NotificationAction.DOWNLOAD_START.name
                         )
+                        delay(500)
+                        notificationManager.cancelNotification(downloadId)
                     }
                 }
 
@@ -536,11 +537,11 @@ class DownloadService : Service() {
                             actionData = downloadedSize.toSize(""),
                             isIndeterminate = true
                         )
-                        notificationManager.showFileDownloadNotification(notificationData)
                         LocalMessageSender.sendMessageToForeground(
                             context = appContext,
                             progressData = progressData
                         )
+                        notificationManager.showFileDownloadNotification(notificationData)
                     }
                 }
 
@@ -571,11 +572,11 @@ class DownloadService : Service() {
                             progress = progress,
                             actionData = "${downloadedSize.toSize("")} / ${totalSize.toSize("")}"
                         )
-                        notificationManager.showFileDownloadNotification(notificationData)
                         LocalMessageSender.sendMessageToForeground(
                             context = appContext,
                             progressData = progressData
                         )
+                        notificationManager.showFileDownloadNotification(notificationData)
                     }
                 }
 
@@ -620,22 +621,24 @@ class DownloadService : Service() {
                             }
                         } else logs(logTag, "onDownloadComplete: output file not created")
 
-                        notificationManager.cancelNotification(downloadId)
                         refreshDownloadService(
                             appContext = appContext,
                             action = NotificationAction.DOWNLOAD_START.name
                         )
+                        delay(500)
+                        notificationManager.cancelNotification(downloadId)
                     }
                 }
 
                 override fun onDownloadFailed(errorMessage: String, downloadId: Int) {
                     coroutineScope.launch(dispatcherProviderSource.io) {
                         logs(logTag, "onDownloadFailed: $errorMessage, downloadId => $downloadId")
-                        notificationManager.cancelNotification(downloadId)
                         refreshDownloadService(
                             appContext = appContext,
                             action = NotificationAction.DOWNLOAD_START.name
                         )
+                        delay(500)
+                        notificationManager.cancelNotification(downloadId)
                     }
                 }
             })
