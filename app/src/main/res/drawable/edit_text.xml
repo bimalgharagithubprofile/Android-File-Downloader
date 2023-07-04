@@ -9,7 +9,7 @@
     <padding
         android:bottom="@dimen/input_padding_height"
         android:left="@dimen/input_padding_width"
-        android:right="@dimen/input_padding_width"
+        android:right="@dimen/_30sdp"
         android:top="@dimen/input_padding_height"
         />
 

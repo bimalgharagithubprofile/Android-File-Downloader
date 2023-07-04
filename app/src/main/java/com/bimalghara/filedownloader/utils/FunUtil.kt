@@ -101,9 +101,15 @@ object FunUtil {
     private fun formatETA(eta: Long): String {
         return when {
             eta < 0 -> "N/A"
-            eta < 60 -> "$eta sec"
-            eta < 3600 -> "${eta / 60} min ${eta % 60} sec"
-            else -> "${eta / 3600} hr ${(eta % 3600) / 60} min"
+            eta < 60 -> "00:${eta}"
+            eta < 3600 -> "${eta / 60}:${eta % 60}"
+            else -> {
+                val hours = eta / 3600
+                val minutes = (eta % 3600) / 60
+                val seconds = eta % 60
+
+                "${hours}:${minutes}:${seconds}"
+            }
         }
     }
 

@@ -1,10 +1,12 @@
 package com.bimalghara.filedownloader.presentation
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -191,7 +193,6 @@ class MainActivity : BaseActivity() {
                 override fun onItemClick(data: DownloadItemState, isCanceled: Boolean) {
                     Log.e(logTag, "Adapter::onItemClick -> isCanceled:$isCanceled | data:$data")
                     if(isCanceled){
-                        //remove from database & the file
                         viewModel.removeDownload(this@MainActivity, data.id, data.downloadStatus)
                     } else {
                         when(data.downloadStatus) {
@@ -205,7 +206,7 @@ class MainActivity : BaseActivity() {
                                 LocalMessageSender.sendMessageToBackground(this@MainActivity, action = NotificationAction.DOWNLOAD_RESUME.name, downloadId = data.id)
                             }
                             DownloadStatus.COMPLETED.name -> {
-                                //eeeeeeeee
+                                openFile(data.downloadedFileUri, data.mimeType)
                             }
                             DownloadStatus.FAILED.name -> {
                                 viewModel.reAddIntoQueue(this@MainActivity, data)
@@ -220,6 +221,23 @@ class MainActivity : BaseActivity() {
             this.layoutManager = LinearLayoutManager(this@MainActivity, LinearLayoutManager.VERTICAL, false)
             this.adapter = downloadsCardsAdapter
         }
+    }
+
+    @SuppressLint("QueryPermissionsNeeded")
+    private fun openFile(downloadedFileUri: String?, mimeType: String) {
+        if(downloadedFileUri!=null){
+            val documentFileUri: Uri? = Uri.parse(downloadedFileUri)
+            if(documentFileUri!=null) {
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.setDataAndType(documentFileUri, mimeType)
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                if (intent.resolveActivity(packageManager) != null) {
+                    startActivity(intent)
+                } else {
+                    viewModel._errorSingleEvent.value = SingleEvent(getStringFromResource(R.string.error_no_relevant_app))
+                }
+            } else viewModel._errorSingleEvent.value = SingleEvent(getStringFromResource(R.string.error_invalid_uri))
+        } else viewModel._errorSingleEvent.value = SingleEvent(getStringFromResource(R.string.error_invalid_path))
     }
 
     override fun observeViewModel() {
